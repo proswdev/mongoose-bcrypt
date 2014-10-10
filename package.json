@@ -1,0 +1,33 @@
+{
+  "name": "mongoose-bcrypt",
+  "version": "1.0.0",
+  "description": "Mongoose plugin adding an encrypted password field using bcrypt-nodejs by default but with options to add multiple fields with configurable encryption per field",
+  "main": "index.js",
+  "scripts": {
+    "test": "/usr/lib/node_modules/mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/proswdev/mongoose-bcrypt.git"
+  },
+  "keywords": [
+    "mongoose",
+    "password",
+    "hash",
+    "bcrypt",
+    "encryption"
+  ],
+  "author": "Eric Vandewater <ericv@prosoftwaredev.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/proswdev/mongoose-bcrypt/issues"
+  },
+  "homepage": "https://github.com/proswdev/mongoose-bcrypt",
+  "dependencies": {
+    "bcrypt-nodejs": "0.0.3"
+  },
+  "devDependencies": {
+    "mongoose": "^3.8.17",
+    "should": "^4.0.4"
+  }
+}

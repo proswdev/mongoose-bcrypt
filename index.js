@@ -1,0 +1,88 @@
+'use strict';
+
+var bcrypt = require('bcrypt-nodejs');
+
+// Add Array.forEach support for older javascript versions
+if (!Array.prototype.forEach)
+{
+    Array.prototype.forEach = function(fun /*, thisp*/)
+    {
+        var len = this.length;
+        if (typeof fun != "function")
+            throw new TypeError();
+
+        var thisp = arguments[1];
+        for (var i = 0; i < len; i++)
+        {
+            if (i in this)
+                fun.call(thisp, this[i], i, this);
+        }
+    };
+}
+
+module.exports = function(schema, options) {
+
+    options = options || {};
+
+    // Get array of encrypted field(s) or use default
+    var fields = options.fields || options.field || ['password'];
+    if (typeof fields == 'string') {
+        fields = [fields];
+    }
+
+    // Get encryption rounds or use defaults
+    var rounds = options.rounds || 5;
+
+    // Add properties and verifier functions to schema for each encrypted field
+    fields.forEach(function(field){
+
+        // Setup field name for camelcasing
+        var fieldName = field[0].toUpperCase() + field.slice(1);
+
+        // Define async verification function
+        schema.methods['verify' + fieldName] = function(password, cb) {
+            return bcrypt.compare(password, this[field], cb);
+        };
+
+        // Define sync verification function
+        schema.methods['verify' + fieldName + 'Sync'] = function(password) {
+            return bcrypt.compareSync(password, this[field]);
+        };
+
+        // Add field to schema if not already defined
+        if (!schema.path(field)) {
+            var pwd = { };
+            pwd[field] = { type: String };
+            schema.add(pwd);
+        }
+    });
+
+    // Hash all modified encrypted fields upon saving the model
+    schema.pre('save', function preSavePassword(next) {
+        var model = this;
+        var changed = [];
+
+        // Determine list of encrypted fields that have been modified
+        fields.forEach(function(field){
+            if (model.isModified(field)) {
+                changed.push(field);
+            }
+        });
+
+        // Create/update hash for each modified encrypted field
+        var count = changed.length;
+        changed.forEach(function(field){
+            bcrypt.genSalt(schema.path(field).options.rounds || rounds, function(err, salt) {
+                if (err) return next(err);
+                bcrypt.hash(model[field], salt, null, function(err, hash) {
+                    if (err) return next(err);
+                    model[field] = hash;
+                    if (--count == 0)
+                        next();
+                });
+            });
+        });
+    });
+
+};
+
