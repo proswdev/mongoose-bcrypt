@@ -31,7 +31,7 @@ module.exports = function(schema, options) {
     }
 
     // Get encryption rounds or use defaults
-    var rounds = options.rounds || 5;
+    var rounds = options.rounds || 0;
 
     // Add properties and verifier functions to schema for each encrypted field
     fields.forEach(function(field){
