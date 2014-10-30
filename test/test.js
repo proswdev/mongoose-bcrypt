@@ -4,7 +4,7 @@ var should = require('should');
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
 
-describe.skip('mongoose-bcrypt', function() {
+describe('mongoose-bcrypt', function() {
     var testConn;
     var defaultRounds;
 
@@ -63,6 +63,11 @@ describe.skip('mongoose-bcrypt', function() {
         it ('should reject invalid password (sync)', function(done) {
             test1.verifyPasswordSync(testPwd + 'bogus').should.be.false;
             done();
+        });
+
+        it ('should save instance with unchaged password', function(done) {
+            test1.name += "Updated";
+            test1.save(done);
         });
     });
 

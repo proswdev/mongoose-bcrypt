@@ -71,17 +71,21 @@ module.exports = function(schema, options) {
 
         // Create/update hash for each modified encrypted field
         var count = changed.length;
-        changed.forEach(function(field){
-            bcrypt.genSalt(schema.path(field).options.rounds || rounds, function(err, salt) {
-                if (err) return next(err);
-                bcrypt.hash(model[field], salt, null, function(err, hash) {
+        if (count > 0) {
+            changed.forEach(function(field){
+                bcrypt.genSalt(schema.path(field).options.rounds || rounds, function(err, salt) {
                     if (err) return next(err);
-                    model[field] = hash;
-                    if (--count == 0)
-                        next();
+                    bcrypt.hash(model[field], salt, null, function(err, hash) {
+                        if (err) return next(err);
+                        model[field] = hash;
+                        if (--count == 0)
+                            next();
+                    });
                 });
             });
-        });
+        } else {
+            next();
+        }
     });
 
 };

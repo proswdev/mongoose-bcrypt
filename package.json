@@ -1,6 +1,6 @@
 {
   "name": "mongoose-bcrypt",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Mongoose plugin adding an encrypted password field using bcrypt-nodejs by default but with options to add multiple fields with configurable encryption per field",
   "main": "index.js",
   "scripts": {
