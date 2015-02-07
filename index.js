@@ -24,11 +24,22 @@ module.exports = function(schema, options) {
 
     options = options || {};
 
-    // Get array of encrypted field(s) or use default
-    var fields = options.fields || options.field || ['password'];
+    // Get array of encrypted field(s)
+    var fields = options.fields || options.field || [];
     if (typeof fields == 'string') {
         fields = [fields];
     }
+
+    // Scan schema for fields marked as encrypted
+    schema.eachPath(function(name,type) {
+        if (type.options.bcrypt)
+            if (fields.indexOf(name) < 0)
+                fields.push(name);
+    });
+
+    // Use default 'password' field if no fields specified
+    if (fields.length === 0)
+        fields.push('password');
 
     // Get encryption rounds or use defaults
     var rounds = options.rounds || 0;

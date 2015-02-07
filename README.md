@@ -1,6 +1,6 @@
 # mongoose-bcrypt #
 
-Mongoose plugin adding an encrypted password field using bcrypt-nodejs by default but with options to add multiple fields with configurable encryption per field.
+Mongoose plugin encrypting field(s) with bcrypt. Adds an encrypted password field using bcrypt-nodejs by default but with options to add multiple fields with configurable encryption per field.  
 
 ## Installation ##
 
@@ -15,58 +15,63 @@ Adds encrypted `password` field with instance methods `verifyPassword(password,c
 var demoSchema = new mongoose.Schema({
     demoField: String
 });
-demoSchema.plugin(require('mongoose-bcrypt'));	// Adds { password: String } to schema
+
+// Add { password: String } to schema
+demoSchema.plugin(require('mongoose-bcrypt'));
 
 var Demo = mongoose.model('Demo', demoSchema);
 
-var newDemo = new Demo({
+// Create demo instance with encrypted password
+Demo.create({
   demoField: 'someValue',
   password: 'mySecretPassword'
-}).save(function(err, demo) {					// Stores newDemo with encrypted password
-	if (!err) {
-		demo.verifyPassword('mySecretPassword', function(err, isMatch) {
-			if (!err) {
-				console.log(isMatch ? "Valid" : "Invalid");		// Logs 'Valid'
-			}
-		});
-		var syncMatch = demo.verifyPasswordSync('bogusPassword');
-		console.log(syncMatch ? "Valid" : "Invalid");			// Logs 'Invalid'
-	};
+}, function(err, demo) {
+  if (!err) {
+    // Verify password with callback
+    demo.verifyPassword('mySecretPassword', function(err, valid) {
+      if (!err)
+        console.log(valid ? "ValidAsync" : "InvalidAsync"); //=>'ValidAsync'
+    });
+    // Verify password synchronously
+    var valid = demo.verifyPasswordSync('bogusPassword');
+    console.log(valid ? "ValidSync" : "InvalidSync"); //=>'InvalidSync' 
+  }
 });
 ```
-## Add schema options ##
-To set additional schema options, define the password field with desired options **before** loading the plugin. The module will simply attach to the existing field.
+## Encrypting existing fields ##
+To encrypt one or more existings fields or set additional schema options, add the bcrypt option to each schema type **before** loading the plugin. The module will simply attach to the existing fields and create verify methods for each field using camelCasing. The following example encrypts fields `password` and `secret` and create verify methods `verifyPassword`, `verifyPasswordSync`, `verifySecret` and `verifySecretSync`.
 ```javascript
 var demoSchema = new mongoose.Schema({
-    demoField: String,
-	password: { type: String, required: true }
+  demoField: String,
+  password: { type: String, required: true, bcrypt: true },
+  secret: { type: String, bcrypt: true }
 });
-demoSchema.plugin(require('mongoose-bcrypt'));	// Will attach to predefined password field
+// Attach to predefined password and secret field
+demoSchema.plugin(require('mongoose-bcrypt'));
 ```
-## Use custom field name##
-To use a field other than password, specify the field name when loading the plugin. This will also rename the corresponding verify methods using CamelCasing. The following example adds encrypted field `secret` and adds instance methods `verifySecret` and `verifySecretSync`. 
+## Adding encrypted fields ##
+Specify an array of field names when loading the plugin to add new encrypted fields to a schema. The module will attach to existing fields if already defined but create new encrypted fields otherwise. Verification methods will be added for each field as described above. 
 ```javascript
-demoSchema.plugin(require('mongoose-bcrypt'), { field: 'secret' });	// Add 'secret' field
-```
-## Add multiple fields ##
-Specify an array of field names to add multiple encrypted fields to a schema. Verification methods will be added for each field as described above.
-```javascript
-demoSchema.plugin(require('mongoose-bcrypt'), { fields: ['password', 'secret'] });	// Add 'password' and 'secret' fields
+// Add 'password' and 'secret' fields
+demoSchema.plugin(require('mongoose-bcrypt'), { fields: ['secretA', 'secretB'] });
 ```
 ## Set bcrypt rounds ##
 Rounds determine the complexity used for encryption with bcrypt-nodejs (see [bcrypt-nodejs](https://www.npmjs.org/package/bcrypt-nodejs "bcrypt-nodejs") docs). To override the default, specificy the desired number of rounds when plugin is loaded.
 ```javascript
-demoSchema.plugin(require('mongoose-bcrypt'), { rounds: 8 });	// Will use bcrypt with 8 rounds
+// Use bcrypt with 8 rounds
+demoSchema.plugin(require('mongoose-bcrypt'), { rounds: 8 });
 ```
 ## Set bcrypt rounds per field ##
-The default number of rounds is used for all encrypted fields unless a field specifies otherwise. The following example will encrypt password with 9 rounds but secretA and secretB with 5 rounds.
+The default number of rounds is used for all encrypted fields unless a field specifies otherwise. The following example will encrypt `secretA` with 9 rounds, `secretB` with 6 rounds and both `secretC` and `secretD` with the default 5 rounds.
 ```javascript
 var demoSchema = new mongoose.Schema({
     demoField: String,
-	password: { type: String, required: true, rounds: 9 }
+	secretA: { type: String, required: true, rounds: 9 },
+	secretB: { type: String, bcrypt: true, rounds: 6 },
+	secretC: { type: String, bcrypt: true }
 });
 demoSchema.plugin(require('mongoose-bcrypt'), { 
-	fields: ['password', 'secretA', 'secretB'], 
+	fields: ['secretA', 'secretD'], 
 	rounds: 5 
 });
 ```
