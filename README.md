@@ -1,6 +1,6 @@
 # mongoose-bcrypt #
 
-Mongoose plugin encrypting field(s) with bcrypt. Adds an encrypted password field using bcrypt-nodejs by default but with options to add multiple fields with configurable encryption per field.  
+Mongoose plugin encrypting field(s) with bcrypt and providing methods to verify.
 
 ## Installation ##
 
@@ -52,7 +52,7 @@ demoSchema.plugin(require('mongoose-bcrypt'));
 ## Adding encrypted fields ##
 Specify an array of field names when loading the plugin to add new encrypted fields to a schema. The module will attach to existing fields if already defined but create new encrypted fields otherwise. Verification methods will be added for each field as described above. 
 ```javascript
-// Add 'password' and 'secret' fields
+// Add 'secretA' and 'secretB' fields
 demoSchema.plugin(require('mongoose-bcrypt'), { fields: ['secretA', 'secretB'] });
 ```
 ## Set bcrypt rounds ##
