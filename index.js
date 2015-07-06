@@ -1,24 +1,40 @@
 'use strict';
 
 var bcrypt = require('bcrypt-nodejs');
+var ROUNDS = 10;
 
-// Add Array.forEach support for older javascript versions
-if (!Array.prototype.forEach)
-{
-    Array.prototype.forEach = function(fun /*, thisp*/)
-    {
-        var len = this.length;
-        if (typeof fun != "function")
-            throw new TypeError();
-
-        var thisp = arguments[1];
-        for (var i = 0; i < len; i++)
-        {
-            if (i in this)
-                fun.call(thisp, this[i], i, this);
-        }
-    };
-}
+var mcrypter = {
+    hash: function(val, salt) {
+        return new Promise(function(resolve, reject) {
+            bcrypt.hash(val, salt, null, function(err, hash) {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(hash);
+                }
+            });
+        });
+    },
+    salt: function(rounds) {
+        return new Promise(function(resolve, reject) {
+            bcrypt.genSalt(rounds || ROUNDS, function(err, salt) {
+                if (err) {
+                    reject(err);
+                }
+                else {
+                    resolve(salt);
+                }
+            });
+        });
+    },
+    encrypt: function(model, field, rounds) {
+        var self = this;
+        return this.salt(rounds).then(function(salt) {
+            return self.hash(model[field], salt);
+        });
+    }
+};
 
 module.exports = function(schema, options) {
 
@@ -55,11 +71,6 @@ module.exports = function(schema, options) {
             return bcrypt.compare(password, this[field], cb);
         };
 
-        // Define sync verification function
-        schema.methods['verify' + fieldName + 'Sync'] = function(password) {
-            return bcrypt.compareSync(password, this[field]);
-        };
-
         // Add field to schema if not already defined
         if (!schema.path(field)) {
             var pwd = { };
@@ -71,32 +82,16 @@ module.exports = function(schema, options) {
     // Hash all modified encrypted fields upon saving the model
     schema.pre('save', function preSavePassword(next) {
         var model = this;
-        var changed = [];
-
-        // Determine list of encrypted fields that have been modified
-        fields.forEach(function(field){
-            if (model.isModified(field)) {
-                changed.push(field);
-            }
+        var modified = fields.filter(function(field){
+            return model.isModified(field);
+        }).map(function(field) {
+            var fieldRounds = schema.path(field).options.rounds || rounds;
+            return mcrypter.encrypt(model, field, fieldRounds).then(function(hash) {
+                model[field] = hash;
+            });
         });
 
-        // Create/update hash for each modified encrypted field
-        var count = changed.length;
-        if (count > 0) {
-            changed.forEach(function(field){
-                bcrypt.genSalt(schema.path(field).options.rounds || rounds, function(err, salt) {
-                    if (err) return next(err);
-                    bcrypt.hash(model[field], salt, null, function(err, hash) {
-                        if (err) return next(err);
-                        model[field] = hash;
-                        if (--count == 0)
-                            next();
-                    });
-                });
-            });
-        } else {
-            next();
-        }
+        Promise.all(modified).then(next).catch(next);
     });
 
 };

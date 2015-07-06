@@ -29,6 +29,7 @@ describe('mongoose-bcrypt', function() {
                     name: 'test',
                     password: testPwd
                 }).save(function(err, test) {
+                    console.log('error', err);
                     should.not.exist(err);
                     test1 = test;
                     done();
@@ -55,16 +56,6 @@ describe('mongoose-bcrypt', function() {
                 isMatch.should.be.false;
                 done();
             });
-        });
-
-        it ('should accept valid password (sync)', function(done) {
-            test1.verifyPasswordSync(testPwd).should.be.true;
-            done();
-        });
-
-        it ('should reject invalid password (sync)', function(done) {
-            test1.verifyPasswordSync(testPwd + 'bogus').should.be.false;
-            done();
         });
 
         it ('should save instance with unchanged password', function(done) {
@@ -135,20 +126,6 @@ describe('mongoose-bcrypt', function() {
                         done();
                 });
             }
-        });
-
-        it ('should accept valid field values (sync)', function(done) {
-            for (var i = 0, len = fields.length; i < len; i++) {
-                test2[verify[i] + "Sync"](testPwds[i]).should.be.true;
-            }
-            done();
-        });
-
-        it ('should reject invalid field values (sync)', function(done) {
-            for (var i = 0, len = fields.length; i < len; i++) {
-                test2[verify[i] + "Sync"](testPwds[i]+'bogus').should.be.false;
-            }
-            done();
         });
 
         it ('should not encrypt unmarked fields', function(done){
@@ -227,20 +204,6 @@ describe('mongoose-bcrypt', function() {
                         done();
                 });
             }
-        });
-
-        it ('should accept valid field values (sync)', function(done) {
-            for (var i = 0, len = fields.length; i < len; i++) {
-                test3[verify[i] + "Sync"](testPwds[i]).should.be.true;
-            }
-            done();
-        });
-
-        it ('should reject invalid field values (sync)', function(done) {
-            for (var i = 0, len = fields.length; i < len; i++) {
-                test3[verify[i] + "Sync"](testPwds[i]+'bogus').should.be.false;
-            }
-            done();
         });
 
     });
