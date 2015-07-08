@@ -1,26 +1,11 @@
 'use strict';
 
 var bcrypt = require('bcrypt-nodejs');
+var ROUNDS = 10;
+var mcrypter = require('./lib/mcrypter');
 
-// Add Array.forEach support for older javascript versions
-if (!Array.prototype.forEach)
-{
-    Array.prototype.forEach = function(fun /*, thisp*/)
-    {
-        var len = this.length;
-        if (typeof fun != "function")
-            throw new TypeError();
 
-        var thisp = arguments[1];
-        for (var i = 0; i < len; i++)
-        {
-            if (i in this)
-                fun.call(thisp, this[i], i, this);
-        }
-    };
-}
-
-module.exports = function(schema, options) {
+var mongooseBcrypt = function(schema, options) {
 
     options = options || {};
 
@@ -42,22 +27,22 @@ module.exports = function(schema, options) {
         fields.push('password');
 
     // Get encryption rounds or use defaults
-    var rounds = options.rounds || 0;
+    var rounds = options.rounds || ROUNDS;
 
     // Add properties and verifier functions to schema for each encrypted field
     fields.forEach(function(field){
 
         // Setup field name for camelcasing
         var fieldName = field[0].toUpperCase() + field.slice(1);
-
-        // Define async verification function
-        schema.methods['verify' + fieldName] = function(password, cb) {
-            return bcrypt.compare(password, this[field], cb);
-        };
-
+        
         // Define sync verification function
         schema.methods['verify' + fieldName + 'Sync'] = function(password) {
             return bcrypt.compareSync(password, this[field]);
+        };
+        
+        // Define async verification function
+        schema.methods['verify' + fieldName] = function(password, cb) {
+            return bcrypt.compare(password, this[field], cb);
         };
 
         // Add field to schema if not already defined
@@ -68,36 +53,42 @@ module.exports = function(schema, options) {
         }
     });
 
+    schema.methods.getEncrypted = function(field, cb) {
+        var fieldRounds;
+        var schemaField = schema.path(field);
+        if (!schemaField) {
+            return new Promise(function(resolve, reject) {
+                reject(new Error('Invalid field `' + field + '`'));
+            });
+        }
+        fieldRounds = schemaField.options.rounds || rounds;
+        return mcrypter.encrypt(this[field], fieldRounds).then(function(hash) {
+            if (typeof cb === 'function') {
+                cb(null, hash);
+            }
+            return hash;
+        }, function(err) {
+            if (typeof cb === 'function') {
+                cb(err);
+            }
+            return err;
+        });
+    };
+
     // Hash all modified encrypted fields upon saving the model
     schema.pre('save', function preSavePassword(next) {
         var model = this;
-        var changed = [];
-
-        // Determine list of encrypted fields that have been modified
-        fields.forEach(function(field){
-            if (model.isModified(field)) {
-                changed.push(field);
-            }
+        var modified = fields.filter(function(field){
+            return model.isModified(field);
+        }).map(function(field) {
+            var fieldRounds = schema.path(field).options.rounds || rounds;
+            return mcrypter.encrypt(model[field], fieldRounds).then(function(hash) {
+                model[field] = hash;
+            });
         });
 
-        // Create/update hash for each modified encrypted field
-        var count = changed.length;
-        if (count > 0) {
-            changed.forEach(function(field){
-                bcrypt.genSalt(schema.path(field).options.rounds || rounds, function(err, salt) {
-                    if (err) return next(err);
-                    bcrypt.hash(model[field], salt, null, function(err, hash) {
-                        if (err) return next(err);
-                        model[field] = hash;
-                        if (--count == 0)
-                            next();
-                    });
-                });
-            });
-        } else {
-            next();
-        }
+        Promise.all(modified).then(next).catch(next);
     });
-
 };
 
+module.exports = mongooseBcrypt;
