@@ -2,41 +2,10 @@
 
 var bcrypt = require('bcrypt-nodejs');
 var ROUNDS = 10;
+var mcrypter = require('./lib/mcrypter');
 
-var mcrypter = {
-    hash: function(val, salt) {
-        return new Promise(function(resolve, reject) {
-            bcrypt.hash(val, salt, null, function(err, hash) {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve(hash);
-                }
-            });
-        });
-    },
-    salt: function(rounds) {
-        return new Promise(function(resolve, reject) {
-            bcrypt.genSalt(rounds || ROUNDS, function(err, salt) {
-                if (err) {
-                    reject(err);
-                }
-                else {
-                    resolve(salt);
-                }
-            });
-        });
-    },
-    encrypt: function(model, field, rounds) {
-        var self = this;
-        return this.salt(rounds).then(function(salt) {
-            return self.hash(model[field], salt);
-        });
-    }
-};
 
-module.exports = function(schema, options) {
+var mongooseBcrypt = function(schema, options) {
 
     options = options || {};
 
@@ -58,7 +27,7 @@ module.exports = function(schema, options) {
         fields.push('password');
 
     // Get encryption rounds or use defaults
-    var rounds = options.rounds || 0;
+    var rounds = options.rounds || ROUNDS;
 
     // Add properties and verifier functions to schema for each encrypted field
     fields.forEach(function(field){
@@ -79,6 +48,28 @@ module.exports = function(schema, options) {
         }
     });
 
+    schema.methods.getEncrypted = function(field, cb) {
+        var fieldRounds;
+        var schemaField = schema.path(field);
+        if (!schemaField) {
+            return new Promise(function(resolve, reject) {
+                reject(new Error('Invalid field `' + field + '`'));
+            });
+        }
+        fieldRounds = schemaField.options.rounds || rounds;
+        return mcrypter.encrypt(this[field], fieldRounds).then(function(hash) {
+            if (typeof cb === 'function') {
+                cb(null, hash);
+            }
+            return hash;
+        }, function(err) {
+            if (typeof cb === 'function') {
+                cb(err);
+            }
+            return err;
+        });
+    };
+
     // Hash all modified encrypted fields upon saving the model
     schema.pre('save', function preSavePassword(next) {
         var model = this;
@@ -86,13 +77,13 @@ module.exports = function(schema, options) {
             return model.isModified(field);
         }).map(function(field) {
             var fieldRounds = schema.path(field).options.rounds || rounds;
-            return mcrypter.encrypt(model, field, fieldRounds).then(function(hash) {
+            return mcrypter.encrypt(model[field], fieldRounds).then(function(hash) {
                 model[field] = hash;
             });
         });
 
         Promise.all(modified).then(next).catch(next);
     });
-
 };
 
+module.exports = mongooseBcrypt;

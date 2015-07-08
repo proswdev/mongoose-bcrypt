@@ -3,12 +3,14 @@
 var should = require('should');
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
+var mongooseBcrypt = require('../index');
+var mcrypter = require('../lib/mcrypter');
 
 describe('mongoose-bcrypt', function() {
     var defaultRounds;
 
     before(function(done){
-        mongoose.connect('mongodb://localhost:27017/test');
+        mongoose.connect('mongodb://localhost/monoose-bcrypt-test');
         defaultRounds = bcrypt.getRounds(bcrypt.hashSync('test'));
         done();
     });
@@ -21,7 +23,7 @@ describe('mongoose-bcrypt', function() {
             var TestSchema1 = new mongoose.Schema({
                 name: String
             });
-            TestSchema1.plugin(require('../index'));
+            TestSchema1.plugin(mongooseBcrypt);
             (TestSchema1.path('password') == undefined).should.be.false;
             var Test1 = mongoose.model('Test1', TestSchema1);
             Test1.remove(function(){
@@ -29,7 +31,6 @@ describe('mongoose-bcrypt', function() {
                     name: 'test',
                     password: testPwd
                 }).save(function(err, test) {
-                    console.log('error', err);
                     should.not.exist(err);
                     test1 = test;
                     done();
@@ -208,4 +209,28 @@ describe('mongoose-bcrypt', function() {
 
     });
 
+    describe('Get encrypted values', function() {
+        it('should return a promise with a hash on success', function(done) {
+            var Test1 = mongoose.model('Test1');
+            var val = 'test';
+            var test = new Test1({ password: val });
+            var testHash;
+            mcrypter.encrypt(val, defaultRounds).then(function(hash) {
+                testHash = hash;
+                return test.getEncrypted('password');    
+            }).then(function(hash) {
+                bcrypt.getRounds(hash).should.equal(bcrypt.getRounds(testHash));
+                done();
+            });
+        });
+
+        it('should error out somehow if the field doesnt exist', function(done) {
+            var Test1 = mongoose.model('Test1');
+            var test = new Test1({ password: 'test' });
+            test.getEncrypted('testing').catch(function(err) {
+                err.message.should.equal('Invalid field `testing`');
+                done();
+            });
+        });
+    });
 });
