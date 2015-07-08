@@ -34,7 +34,12 @@ var mongooseBcrypt = function(schema, options) {
 
         // Setup field name for camelcasing
         var fieldName = field[0].toUpperCase() + field.slice(1);
-
+        
+        // Define sync verification function
+        schema.methods['verify' + fieldName + 'Sync'] = function(password) {
+            return bcrypt.compareSync(password, this[field]);
+        };
+        
         // Define async verification function
         schema.methods['verify' + fieldName] = function(password, cb) {
             return bcrypt.compare(password, this[field], cb);
