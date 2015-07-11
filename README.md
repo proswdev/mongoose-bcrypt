@@ -1,6 +1,6 @@
 # mongoose-bcrypt #
 
-Mongoose plugin encrypting field(s) with bcrypt and providing methods to verify.
+Mongoose plugin encrypting field(s) with bcrypt and providing methods to encrypt and verify.
 
 ## Installation ##
 
@@ -9,7 +9,7 @@ $ npm install mongoose-bcrypt
 ```
 
 ## Default usage ##
-Adds encrypted `password` field with instance methods `verifyPassword(password,callback)` and `verifyPasswordSync(password)`
+Adds encrypted `password` field with instance methods `verifyPassword(password,callback)` and `verifyPasswordSync(password)` and static method `encryptPassword(password,callback)`
 
 ```javascript
 var demoSchema = new mongoose.Schema({
@@ -34,12 +34,23 @@ Demo.create({
     });
     // Verify password synchronously
     var valid = demo.verifyPasswordSync('bogusPassword');
-    console.log(valid ? "ValidSync" : "InvalidSync"); //=>'InvalidSync' 
+    console.log(valid ? "ValidSync" : "InvalidSync"); //=>'InvalidSync'
   }
 });
+
+// The password field is automatically encrypted when an instance is saved
+// Use the static encryption method to return encrypted password values for
+// other use. The values will be encrypted using the actual bcrypt settings
+// assigned to the password field (see bcrypt rounds below)  
+Demo.encryptPassword('anotherSecret', function(err, encryptedValue) {
+	if (!err) {
+		// Do something with encrypted data
+		console.log('Encrypted password is ' + encryptedValue);
+	}
+}); 
 ```
 ## Encrypting existing fields ##
-To encrypt one or more existings fields or set additional schema options, add the bcrypt option to each schema type **before** loading the plugin. The module will simply attach to the existing fields and create verify methods for each field using camelCasing. The following example encrypts fields `password` and `secret` and create verify methods `verifyPassword`, `verifyPasswordSync`, `verifySecret` and `verifySecretSync`.
+To encrypt one or more existings fields or set additional schema options, add the bcrypt option to each schema type **before** loading the plugin. The module will simply attach to the existing fields and create encrypt and verify methods for each field using camelCasing. The following example encrypts fields `password` and `secret` and creates instance methods `verifyPassword`, `verifyPasswordSync`, `verifySecret` and `verifySecretSync`, in addition to static methods `encryptPassword` and `encryptSecret`. 
 ```javascript
 var demoSchema = new mongoose.Schema({
   demoField: String,
@@ -50,7 +61,7 @@ var demoSchema = new mongoose.Schema({
 demoSchema.plugin(require('mongoose-bcrypt'));
 ```
 ## Adding encrypted fields ##
-Specify an array of field names when loading the plugin to add new encrypted fields to a schema. The module will attach to existing fields if already defined but create new encrypted fields otherwise. Verification methods will be added for each field as described above. 
+Specify an array of field names when loading the plugin to add new encrypted fields to a schema. The module will attach to existing fields if already defined but create new encrypted fields otherwise. Encryption and verification methods will be added for each field as described above. 
 ```javascript
 // Add 'secretA' and 'secretB' fields
 demoSchema.plugin(require('mongoose-bcrypt'), { fields: ['secretA', 'secretB'] });

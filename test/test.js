@@ -15,7 +15,7 @@ describe('mongoose-bcrypt', function() {
 
     describe('Using default settings', function(){
         var testPwd = 'testPwd';
-        var test1;
+        var Test1,test1;
 
         it ('should create document with encrypted field "password"', function(done) {
             var TestSchema1 = new mongoose.Schema({
@@ -23,7 +23,7 @@ describe('mongoose-bcrypt', function() {
             });
             TestSchema1.plugin(require('../index'));
             (TestSchema1.path('password') == undefined).should.be.false;
-            var Test1 = mongoose.model('Test1', TestSchema1);
+            Test1 = mongoose.model('Test1', TestSchema1);
             Test1.remove(function(){
                 new Test1({
                     name: 'test',
@@ -39,6 +39,14 @@ describe('mongoose-bcrypt', function() {
         it ('should encrypt password with default rounds', function(done){
             bcrypt.getRounds(test1.password).should.equal(defaultRounds);
             done();
+        });
+
+        it ('should return valid encryption value', function(done) {
+            Test1.encryptPassword(testPwd, function(err, hash) {
+                should.not.exist(err);
+                bcrypt.compareSync(testPwd, hash).should.be.true;
+                done();
+            });
         });
 
         it ('should accept valid password (async)', function(done) {
@@ -75,9 +83,10 @@ describe('mongoose-bcrypt', function() {
 
     describe('Encrypting existing fields', function() {
         var testPwds = ['testPwd0', 'testPwd1', 'testPwd2'];
+        var encrypt = ['encryptPwd0', 'encryptPwd1' ];
         var verify = ['verifyPwd0', 'verifyPwd1'];
         var fields = ['pwd0', 'pwd1'];
-        var test2;
+        var Test2,test2;
 
         it ('should create document with fields marked for encryption', function(done) {
             var TestSchema2 = new mongoose.Schema({
@@ -88,9 +97,9 @@ describe('mongoose-bcrypt', function() {
                 pwd2: { type: String }
             });
             TestSchema2.plugin(require('../index'));
-            var Test = mongoose.model('Test2', TestSchema2);
-            Test.remove(function(){
-                new Test({
+            Test2 = mongoose.model('Test2', TestSchema2);
+            Test2.remove(function(){
+                new Test2({
                     name: 'test',
                     pwd0: testPwds[0],
                     pwd1: testPwds[1],
@@ -111,6 +120,21 @@ describe('mongoose-bcrypt', function() {
         it ('should encrypt field with correct rounds when specified', function(done){
             bcrypt.getRounds(test2.pwd1).should.equal(7);
             done();
+        });
+
+        it ('should return valid encryption values', function(done) {
+            var count = fields.length;
+            for (var i = 0, len = count; i < len; i++) {
+                (function() {
+                    var pwd = testPwds[i];
+                    Test2[encrypt[i]](pwd, function(err, hash){
+                        should.not.exist(err);
+                        bcrypt.compareSync(pwd,hash).should.be.true;
+                        if (--count == 0)
+                            done();
+                    });
+                })();
+            }
         });
 
         it ('should accept valid field values (async)', function(done) {
@@ -163,9 +187,10 @@ describe('mongoose-bcrypt', function() {
 
     describe('Encrypting both new and existing fields', function(){
         var testPwds = ['testPwd0', 'testPwd1', 'testPwd2', 'testPwd3'];
+        var encrypt = ['encryptPwd0', 'encryptPwd1', 'encryptPwd2', 'encryptPwd3'];
         var verify = ['verifyPwd0', 'verifyPwd1', 'verifyPwd2', 'verifyPwd3'];
         var fields = ['pwd0', 'pwd1', 'pwd2', 'pwd3'];
-        var test3;
+        var Test3,test3;
 
         it ('should create document with multiple encrypted fields added', function(done) {
             var TestSchema3 = new mongoose.Schema({
@@ -177,9 +202,9 @@ describe('mongoose-bcrypt', function() {
             for (var i = 0, len = fields.length; i < len; i++) {
                 (TestSchema3.path(fields[i]) == undefined).should.be.false;
             }
-            var Test = mongoose.model('Test3', TestSchema3);
-            Test.remove(function(){
-                new Test({
+            Test3 = mongoose.model('Test3', TestSchema3);
+            Test3.remove(function(){
+                new Test3({
                     name: 'test',
                     pwd0: testPwds[0],
                     pwd1: testPwds[1],
@@ -203,6 +228,21 @@ describe('mongoose-bcrypt', function() {
             bcrypt.getRounds(test3.pwd2).should.equal(8);
             bcrypt.getRounds(test3.pwd3).should.equal(8);
             done();
+        });
+
+        it ('should return valid encryption values', function(done) {
+            var count = fields.length;
+            for (var i = 0, len = count; i < len; i++) {
+                (function() {
+                    var pwd = testPwds[i];
+                    Test3[encrypt[i]](pwd, function(err, hash){
+                        should.not.exist(err);
+                        bcrypt.compareSync(pwd,hash).should.be.true;
+                        if (--count == 0)
+                            done();
+                    });
+                })();
+            }
         });
 
         it ('should accept valid field values (async)', function(done) {
