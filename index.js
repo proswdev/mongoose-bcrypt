@@ -50,14 +50,19 @@ module.exports = function(schema, options) {
         // Setup field name for camelcasing
         var fieldName = field[0].toUpperCase() + field.slice(1);
 
+        // Define encryption function
+        schema.statics['encrypt' + fieldName] = function(value, cb) {
+            return encrypt(field, value, cb);
+        };
+
         // Define async verification function
-        schema.methods['verify' + fieldName] = function(password, cb) {
-            return bcrypt.compare(password, this[field], cb);
+        schema.methods['verify' + fieldName] = function(value, cb) {
+            return bcrypt.compare(value, this[field], cb);
         };
 
         // Define sync verification function
-        schema.methods['verify' + fieldName + 'Sync'] = function(password) {
-            return bcrypt.compareSync(password, this[field]);
+        schema.methods['verify' + fieldName + 'Sync'] = function(value) {
+            return bcrypt.compareSync(value, this[field]);
         };
 
         // Add field to schema if not already defined
@@ -84,14 +89,11 @@ module.exports = function(schema, options) {
         var count = changed.length;
         if (count > 0) {
             changed.forEach(function(field){
-                bcrypt.genSalt(schema.path(field).options.rounds || rounds, function(err, salt) {
+                encrypt(field, model[field], function(err, hash) {
                     if (err) return next(err);
-                    bcrypt.hash(model[field], salt, null, function(err, hash) {
-                        if (err) return next(err);
-                        model[field] = hash;
-                        if (--count == 0)
-                            next();
-                    });
+                    model[field] = hash;
+                    if (--count == 0)
+                        next();
                 });
             });
         } else {
@@ -99,5 +101,10 @@ module.exports = function(schema, options) {
         }
     });
 
+    function encrypt(field, value, cb) {
+        bcrypt.genSalt(schema.path(field).options.rounds || rounds, function(err, salt) {
+            if (err) return cb(err);
+            bcrypt.hash(value, salt, null, cb);
+        });
+    }
 };
-
