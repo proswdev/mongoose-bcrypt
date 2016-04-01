@@ -48,7 +48,10 @@ module.exports = function(schema, options) {
     fields.forEach(function(field){
 
         // Setup field name for camelcasing
-        var fieldName = field[0].toUpperCase() + field.slice(1);
+        var path = field.split('.');
+        var fieldName = path.map(function(word){
+          return word[0].toUpperCase() + word.slice(1);
+        }).join('');
 
         // Define encryption function
         schema.statics['encrypt' + fieldName] = function(value, cb) {
@@ -57,18 +60,23 @@ module.exports = function(schema, options) {
 
         // Define async verification function
         schema.methods['verify' + fieldName] = function(value, cb) {
-            return bcrypt.compare(value, this[field], cb);
+            return bcrypt.compare(value, this.get(field), cb);
         };
 
         // Define sync verification function
         schema.methods['verify' + fieldName + 'Sync'] = function(value) {
-            return bcrypt.compareSync(value, this[field]);
+            return bcrypt.compareSync(value, this.get(field));
         };
 
         // Add field to schema if not already defined
         if (!schema.path(field)) {
             var pwd = { };
-            pwd[field] = { type: String };
+            var nested = pwd;
+            for (var i = 0; i < path.length-1; ++i) {
+              nested[path[i]] = {}
+              nested = nested[path[i]];
+            }
+            nested[path[path.length-1]] = { type: String };
             schema.add(pwd);
         }
     });
@@ -89,9 +97,9 @@ module.exports = function(schema, options) {
         var count = changed.length;
         if (count > 0) {
             changed.forEach(function(field){
-                encrypt(field, model[field], function(err, hash) {
+                encrypt(field, model.get(field), function(err, hash) {
                     if (err) return next(err);
-                    model[field] = hash;
+                    model.set(field, hash);
                     if (--count == 0)
                         next();
                 });
