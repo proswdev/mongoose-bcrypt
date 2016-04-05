@@ -284,5 +284,100 @@ describe('mongoose-bcrypt', function() {
         });
 
     });
+    describe('Support nested fields', function(){
+        var testPwds = ['testPwd0', 'testPwd1', 'testPwd2'];
+        var encrypt = ['encryptNestedPwd0', 'encryptNestedPwd1', 'encryptNestedPwd2'];
+        var verify = ['verifyNestedPwd0', 'verifyNestedPwd1', 'verifyNestedPwd2'];
+        var fields = ['nested.pwd0', 'nested.pwd1', 'nested.pwd2'];
+        var Test4, test4;
 
+        it ("shoud create document with nested fields marked for encryption", function(done){
+            var TestSchema4 = new mongoose.Schema({
+                nested: {
+                    pwd0: { type: String, bcrypt: true, rounds: 7 },
+                    pwd1: { type: String }
+                }
+            });
+            TestSchema4.plugin(require('../index'), { fields: ['nested.pwd1', 'nested.pwd2'], rounds: 8 });
+            for (var i = 0, len = fields.length; i < len; i++) {
+                (TestSchema4.path(fields[i]) == undefined).should.be.false;
+            }
+            Test4 = mongoose.model('Test4', TestSchema4);
+            Test4.remove(function(){
+                new Test4({
+                    nested: {
+                      pwd0: testPwds[0],
+                      pwd1: testPwds[1],
+                      pwd2: testPwds[2]
+                    }
+                }).save(function(err,test){
+                    should.not.exist(err);
+                    test4 = test;
+                    done();
+                });
+            });
+        });
+        it ('should encrypt nested field with correct rounds when specified', function(done){
+            bcrypt.getRounds(test4.nested.pwd0).should.equal(7);
+            done();
+        });
+        it ('should encrypt nested fields with default rounds when unspecified', function(done){
+            bcrypt.getRounds(test4.nested.pwd1).should.equal(8);
+            bcrypt.getRounds(test4.nested.pwd2).should.equal(8);
+            done();
+        });
+
+        it ('should return valid encryption values', function(done) {
+            var count = fields.length;
+            for (var i = 0, len = count; i < len; i++) {
+                (function() {
+                    var pwd = testPwds[i];
+                    Test4[encrypt[i]](pwd, function(err, hash){
+                        should.not.exist(err);
+                        bcrypt.compareSync(pwd,hash).should.be.true;
+                        if (--count == 0)
+                            done();
+                    });
+                })();
+            }
+        });
+
+        it ('should accept valid field values (async)', function(done) {
+            var count = fields.length;
+            for (var i = 0, len = count; i < len; i++) {
+                test4[verify[i]](testPwds[i], function(err, isMatch){
+                    (err == null).should.be.true;
+                    isMatch.should.be.true;
+                    if (--count == 0)
+                        done();
+                });
+            }
+        });
+
+        it ('should reject invalid field values (async)', function(done) {
+            var count = fields.length;
+            for (var i = 0, len = count; i < len; i++) {
+                test4[verify[i]](testPwds[i]+'bogus', function(err, isMatch){
+                    (err == null).should.be.true;
+                    isMatch.should.be.false;
+                    if (--count == 0)
+                        done();
+                });
+            }
+        });
+
+        it ('should accept valid field values (sync)', function(done) {
+            for (var i = 0, len = fields.length; i < len; i++) {
+                test4[verify[i] + "Sync"](testPwds[i]).should.be.true;
+            }
+            done();
+        });
+
+        it ('should reject invalid field values (sync)', function(done) {
+            for (var i = 0, len = fields.length; i < len; i++) {
+                test4[verify[i] + "Sync"](testPwds[i]+'bogus').should.be.false;
+            }
+            done();
+        });
+    });
 });
