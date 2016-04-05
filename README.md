@@ -13,7 +13,7 @@ Adds encrypted `password` field with instance methods `verifyPassword(password,c
 
 ```javascript
 var demoSchema = new mongoose.Schema({
-    demoField: String
+  demoField: String
 });
 
 // Add { password: String } to schema
@@ -43,10 +43,10 @@ Demo.create({
 // other use. The values will be encrypted using the actual bcrypt settings
 // assigned to the password field (see bcrypt rounds below)  
 Demo.encryptPassword('anotherSecret', function(err, encryptedValue) {
-	if (!err) {
-		// Do something with encrypted data
-		console.log('Encrypted password is ' + encryptedValue);
-	}
+  if (!err) {
+    // Do something with encrypted data
+    console.log('Encrypted password is ' + encryptedValue);
+  }
 });
 ```
 ## Encrypting existing fields ##
@@ -98,7 +98,7 @@ var demoSchema = new mongoose.Schema({
   }
 });
 demoSchema.plugin(require('mongoose-bcrypt'), {
-	fields: ['secretA', 'secretD'],
-	rounds: 5
+  fields: ['secretA', 'secretD'],
+  rounds: 5
 });
 ```
