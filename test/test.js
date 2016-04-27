@@ -380,4 +380,90 @@ describe('mongoose-bcrypt', function() {
             done();
         });
     });
+
+    describe('Support update queries', function(){
+        var testPwd = 'testPwd';
+        var Test5,test5;
+
+        before(function(done) {
+            var TestSchema5 = new mongoose.Schema({
+                name: String
+            });
+            TestSchema5.plugin(require('../index'));
+            Test5 = mongoose.model('Test5', TestSchema5);
+            Test5.remove(function(){
+                new Test5({
+                    name: 'test',
+                    password: testPwd
+                }).save(function(err, test) {
+                    test5 = test;
+                    done();
+                });
+            })
+        });
+
+        it ('should encrypt password when updating', function(done) {
+            var updatedPassword = 'testPwd2';
+            Test5.update({}, {password: updatedPassword}, function(err) {
+                should.not.exist(err);
+                Test5.find({}, function(err, results) {
+                    results.forEach(function(test) {
+                        test.verifyPassword(updatedPassword, function(err, isMatch){
+                            should.not.exist(err);
+                            isMatch.should.be.true;
+                            done();
+                        });
+                    })
+                })
+            });
+        });
+
+        it ('should encrypt password when updating using $set', function(done) {
+            var updatedPassword = 'testPwd2';
+            Test5.update({}, {$set: {password: updatedPassword}}, function(err) {
+                should.not.exist(err);
+                Test5.find({}, function(err, results) {
+                    results.forEach(function(test) {
+                        test.verifyPassword(updatedPassword, function(err, isMatch){
+                            should.not.exist(err);
+                            isMatch.should.be.true;
+                            done();
+                        });
+                    })
+                })
+            });
+        });
+
+        it ('should encrypt password when find and updating', function(done) {
+            var updatedPassword = 'testPwd2';
+            Test5.findOneAndUpdate({name: 'test'}, {password: updatedPassword}, function(err) {
+                should.not.exist(err);
+                Test5.find({}, function(err, results) {
+                    results.forEach(function(test) {
+                        test.verifyPassword(updatedPassword, function(err, isMatch){
+                            should.not.exist(err);
+                            isMatch.should.be.true;
+                            done();
+                        });
+                    })
+                })
+            });
+        });
+
+        it ('should encrypt password when find and updating using $set', function(done) {
+            var updatedPassword = 'testPwd2';
+            Test5.findOneAndUpdate({name: 'test'}, {$set: {password: updatedPassword}}, function(err) {
+                should.not.exist(err);
+                Test5.find({}, function(err, results) {
+                    results.forEach(function(test) {
+                        test.verifyPassword(updatedPassword, function(err, isMatch){
+                            should.not.exist(err);
+                            isMatch.should.be.true;
+                            done();
+                        });
+                    })
+                })
+            });
+        });
+    });
 });

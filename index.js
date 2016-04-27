@@ -109,6 +109,38 @@ module.exports = function(schema, options) {
         }
     });
 
+    function preUpdate(next) {
+        var query = this;
+        var update = query.getUpdate();
+        if (update.$set) {
+            update = update.$set;
+        }
+        var changed = [];
+        fields.forEach(function(field){
+            if (update[field]) {
+                changed.push(field);
+            }
+        });
+
+        var count = changed.length;
+        if (count > 0) {
+            changed.forEach(function(field){
+                encrypt(field, update[field], function(err, hash) {
+                    if (err) return next(err);
+                    update[field] = hash;
+                    if (--count == 0) {
+                        next();
+                    }
+                });
+            });
+        } else {
+            next();
+        }
+    }
+
+    schema.pre('update', preUpdate);
+    schema.pre('findOneAndUpdate', preUpdate);
+
     function encrypt(field, value, cb) {
         bcrypt.genSalt(schema.path(field).options.rounds || rounds, function(err, salt) {
             if (err) return cb(err);
