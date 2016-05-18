@@ -4,7 +4,7 @@
   "description": "Mongoose plugin encrypting field(s) with bcrypt and providing methods to verify",
   "main": "index.js",
   "scripts": {
-    "test": "/usr/lib/node_modules/mocha"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -33,7 +33,8 @@
     "bcrypt-nodejs": "0.0.3"
   },
   "devDependencies": {
-    "mongoose": "^3.8.33",
+    "mocha": "^2.4.5",
+    "mongoose": "^4.4.13",
     "should": "^4.0.4"
   }
 }
