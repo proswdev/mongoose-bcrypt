@@ -6,6 +6,7 @@
   "scripts": {
     "test": "mocha"
   },
+  "readmeFilename": "README.md",
   "repository": {
     "type": "git",
     "url": "https://github.com/proswdev/mongoose-bcrypt.git"
