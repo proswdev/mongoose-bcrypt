@@ -77,7 +77,9 @@ Specify an array of field names when loading the plugin to add new encrypted fie
 
 ```javascript
 // Add 'secretA', 'secretB' and 'baz.bar.foo' fields
-demoSchema.plugin(require('mongoose-bcrypt'), { fields: ['secretA', 'secretB', 'baz.bar.foo'] });
+demoSchema.plugin(require('mongoose-bcrypt'), { 
+  fields: ['secretA', 'secretB', 'baz.bar.foo'] 
+});
 ```
 ## Set bcrypt rounds ##
 Rounds determine the complexity used for encryption with bcrypt-nodejs (see [bcrypt-nodejs](https://www.npmjs.org/package/bcrypt-nodejs "bcrypt-nodejs") docs). To override the default, specificy the desired number of rounds when plugin is loaded.
@@ -101,4 +103,28 @@ demoSchema.plugin(require('mongoose-bcrypt'), {
   fields: ['secretA', 'secretD'],
   rounds: 5
 });
+```
+## Update Queries ##
+Mongoose-bcrypt will automatically encrypt the appropriate fields when a document is created or saved using the regular static and instance methods. With mongoose versions >= 4.1.3, the plugin also provides automatic encryption when updates are performed using update queries.  
+```javascript
+var newPwd = 'updatedPassword';
+Demo.update({}, { password: newPwd }, 
+  function(err) { 
+    ... 
+  });
+
+Demo.update({}, { $set: { password: newPwd }}, 
+  function(err) { 
+    ... 
+  });
+
+Demo.findOneAndUpdate({ demoField: 'someValue' }, { password: newPwd }, 
+  function(err) { 
+    ... 
+  });
+
+Demo.findOneAndUpdate({ demoField: 'someValue' }, ( $set: { password: newPwd }},  
+  function(err) { 
+    ... 
+  });
 ```

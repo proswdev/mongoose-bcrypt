@@ -1,6 +1,8 @@
 'use strict';
 
 var bcrypt = require('bcrypt-nodejs');
+var mongoose = require('mongoose');
+var semver = require('semver');
 
 // Add Array.forEach support for older javascript versions
 if (!Array.prototype.forEach)
@@ -138,8 +140,10 @@ module.exports = function(schema, options) {
         }
     }
 
-    schema.pre('update', preUpdate);
-    schema.pre('findOneAndUpdate', preUpdate);
+    if (semver.gte(mongoose.version, "4.1.3")) {
+        schema.pre('update', preUpdate);
+        schema.pre('findOneAndUpdate', preUpdate);
+    }
 
     function encrypt(field, value, cb) {
         bcrypt.genSalt(schema.path(field).options.rounds || rounds, function(err, salt) {
