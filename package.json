@@ -1,6 +1,6 @@
 {
   "name": "mongoose-bcrypt",
-  "version": "1.4.2",
+  "version": "1.5.0",
   "description": "Mongoose plugin encrypting field(s) with bcrypt and providing methods to verify",
   "main": "index.js",
   "scripts": {
@@ -36,6 +36,7 @@
     "semver": ">=1.1.0"
   },
   "devDependencies": {
+    "bluebird": "^3.5.0",
     "mocha": "^2.3.2",
     "should": "^4.0.4"
   }

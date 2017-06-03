@@ -9,7 +9,7 @@ $ npm install mongoose-bcrypt
 ```
 
 ## Default usage ##
-Adds encrypted `password` field with instance methods `verifyPassword(password,callback)` and `verifyPasswordSync(password)` and static method `encryptPassword(password,callback)`
+Adds encrypted `password` field with instance methods `verifyPassword(password,callback)` and `verifyPasswordSync(password)` and static method `encryptPassword(password,callback)`. Asynchronous methods support both callbacks and promises.
 
 ```javascript
 var demoSchema = new mongoose.Schema({
@@ -27,26 +27,58 @@ Demo.create({
   password: 'mySecretPassword'
 }, function(err, demo) {
   if (!err) {
-    // Verify password with callback
+    // Verify password with callback => Valid (callback)
     demo.verifyPassword('mySecretPassword', function(err, valid) {
-      if (!err)
-        console.log(valid ? "ValidAsync" : "InvalidAsync"); //=>'ValidAsync'
+      if (err) {
+        console.log(err)
+      } else if (valid) {
+        console.log('Valid (callback)');
+      } else {
+        console.log('Invalid (callback)');
+      }
     });
-    // Verify password synchronously
+    // Verify password using promise => Valid (promise)
+    demo.verifyPassword('mySecretPassword')
+      .then(function(valid) {
+        if (valid) {
+          console.log('Valid (promise)');
+        } else {
+          console.log('Invalid (promise)');
+        }
+      })
+      .catch(function(err) {
+        console.log(err);
+      });
+    // Verify password synchronously => Invalid (sync)
     var valid = demo.verifyPasswordSync('bogusPassword');
-    console.log(valid ? "ValidSync" : "InvalidSync"); //=>'InvalidSync'
+    if (valid) {
+      console.log('Valid (sync)');
+    } else {
+      console.log('Invalid (sync)');
+    }
   }
 });
-
 // The password field is automatically encrypted when an instance is saved
 // Use the static encryption method to return encrypted password values for
 // other use. The values will be encrypted using the actual bcrypt settings
 // assigned to the password field (see bcrypt rounds below)  
 Demo.encryptPassword('anotherSecret', function(err, encryptedValue) {
-  if (!err) {
+  if (err) {
+    console.log(err);
+  } else {
     // Do something with encrypted data
     console.log('Encrypted password is ' + encryptedValue);
   }
+});
+// Using promises
+Demo.encryptPassword('anotherSecret')
+  .then(function(encryptedValue) {
+    // Do something with encrypted data
+    console.log('Encrypted password is ' + encryptedValue);
+  })
+  .catch(function(err) {
+    console.log(err);
+  });
 });
 ```
 ## Encrypting existing fields ##
