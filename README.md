@@ -154,7 +154,7 @@ Demo.findOneAndUpdate({ demoField: 'someValue' }, { password: newPwd },
   function(err) { 
     ... 
   });
-  
+
 Demo.findOneAndUpdate({ demoField: 'someValue' }, ( $set: { password: newPwd }},  
   function(err) { 
     ... 
@@ -163,7 +163,7 @@ Demo.findOneAndUpdate({ demoField: 'someValue' }, ( $set: { password: newPwd }},
 
 ## Upsert Query ## 
 
-When [upserting](http://mongoosejs.com/docs/api.html#findoneandupdate_findOneAndUpdate) (find one and update, but if not found create a new document with both the search conditions and update params set) you must use the `$set` operator for the field to be encrypted on the newly created document. 
+When [upserting](http://mongoosejs.com/docs/api.html#findoneandupdate_findOneAndUpdate) you must use the `$set` operator for the field to be encrypted on the newly created document when no existing document is found.
 
 ```javascript
 Demo.findOneAndUpdate({ demoField: 'someValue' }, ( $set: { password: newPwd }}, { upsert: true },
