@@ -1,6 +1,6 @@
 'use strict';
 
-var bcrypt = require('bcrypt-nodejs');
+var bcrypt = require('bcryptjs');
 var mongoose = require('mongoose');
 var semver = require('semver');
 
@@ -152,7 +152,7 @@ module.exports = function(schema, options) {
           if (err) {
             reject(err);
           } else {
-            bcrypt.hash(value, salt, null, function(err, result) {
+            bcrypt.hash(value, salt, function(err, result) {
               if (cb) {
                 cb(err, result);
               }
@@ -170,7 +170,7 @@ module.exports = function(schema, options) {
         if (err) {
           cb(err);
         } else {
-          bcrypt.hash(value, salt, null, cb);
+          bcrypt.hash(value, salt, cb);
         }
       });
     }

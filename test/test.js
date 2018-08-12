@@ -2,7 +2,7 @@
 
 var should = require('should');
 var mongoose = require('mongoose');
-var bcrypt = require('bcrypt-nodejs');
+var bcrypt = require('bcryptjs');
 var semver = require('semver');
 mongoose.Promise = global.Promise = require('bluebird');
 
@@ -10,9 +10,13 @@ describe('mongoose-bcrypt', function() {
   var defaultRounds;
 
   before(function(done){
-    mongoose.connect('mongodb://localhost:27017/test');
+    mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true });
     defaultRounds = bcrypt.getRounds(bcrypt.hashSync('test'));
     done();
+  });
+
+  after(function(done) {
+    mongoose.connection.close(done);
   });
 
   describe('Using default settings', function(){
