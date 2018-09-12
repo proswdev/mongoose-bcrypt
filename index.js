@@ -51,11 +51,7 @@ module.exports = function(schema, options) {
             if (cb) {
               cb(err, valid);
             }
-            if (err) {
-              reject(err);
-            } else {
-              resolve(valid);
-            }
+            (!err && valid) ? resolve() : reject(err || new Error('Password is invalid'));
           });
         });
       } else {
