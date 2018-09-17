@@ -96,11 +96,8 @@ describe('mongoose-bcrypt', function() {
     it ('should reject invalid password using promise', function() {
       return test1
         .verifyPassword(testPwd + 'bogus')
-        .then(function(isMatch) {
-          isMatch.should.be.false;
-        })
         .catch(function(err) {
-          should.fail(err);
+          err.message.should.be.eql('Password is invalid');
         });
     });
 
@@ -229,13 +226,8 @@ describe('mongoose-bcrypt', function() {
     it ('should reject invalid field values using promises', function() {
       return Promise.map(fields, function(field, index) {
         return test2[verify[index]](testPwds[index]+'bogus');
-      }).then(function(results) {
-        results.length.should.equal(fields.length);
-        results.forEach(function(isMatch) {
-          isMatch.should.be.false;
-        });
       }).catch(function(err) {
-        should.fail(err);
+        err.message.should.be.eql('Password is invalid');
       });
     });
 
