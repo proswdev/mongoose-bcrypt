@@ -39,12 +39,8 @@ Demo.create({
     });
     // Verify password using promise => Valid (promise)
     demo.verifyPassword('mySecretPassword')
-      .then(function(valid) {
-        if (valid) {
-          console.log('Valid (promise)');
-        } else {
-          console.log('Invalid (promise)');
-        }
+      .then(function() {
+        console.log('Valid (promise)');
       })
       .catch(function(err) {
         console.log(err);
