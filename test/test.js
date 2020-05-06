@@ -28,7 +28,7 @@ describe('mongoose-bcrypt', function() {
         name: String
       });
       TestSchema1.plugin(require('../index'));
-      (TestSchema1.path('password') == undefined).should.be.false;
+      (TestSchema1.path('password') == undefined).should.be.false();
       Test1 = mongoose.model('Test1', TestSchema1);
       Test1.remove(function(){
         new Test1({
@@ -88,7 +88,7 @@ describe('mongoose-bcrypt', function() {
     it ('should reject invalid password using callback', function(done) {
       test1.verifyPassword(testPwd + 'bogus', function(err, isMatch){
         should.not.exist(err);
-        isMatch.should.be.false;
+        isMatch.should.be.false();
         done();
       });
     });
@@ -97,7 +97,7 @@ describe('mongoose-bcrypt', function() {
       return test1
         .verifyPassword(testPwd + 'bogus')
         .then(function(isMatch) {
-          isMatch.should.be.false;
+          isMatch.should.be.false();
         })
         .catch(function(err) {
           should.fail(err);
@@ -110,7 +110,7 @@ describe('mongoose-bcrypt', function() {
     });
 
     it ('should reject invalid password (sync)', function(done) {
-      test1.verifyPasswordSync(testPwd + 'bogus').should.be.false;
+      test1.verifyPasswordSync(testPwd + 'bogus').should.be.false();
       done();
     });
 
@@ -118,10 +118,15 @@ describe('mongoose-bcrypt', function() {
       test1.name += "Updated";
       test1.save(done);
     });
+
+    it ('should save instance with cleared pasword', function(done) {
+      test1.password = null;
+      test1.save(done);
+    });
   });
 
   describe('Encrypting existing fields', function() {
-    var testPwds = ['testPwd0', 'testPwd1', 'testPwd2'];
+    var testPwds = ['testPwd0', 'testPwd1', 'testPwd2', 'testPwd3'];
     var encrypt = ['encryptPwd0', 'encryptPwd1' ];
     var verify = ['verifyPwd0', 'verifyPwd1'];
     var fields = ['pwd0', 'pwd1'];
@@ -133,7 +138,8 @@ describe('mongoose-bcrypt', function() {
         value: Number,
         pwd0: { type: String, bcrypt: true },
         pwd1: { type: String, required: true, bcrypt: true, rounds: 7},
-        pwd2: { type: String }
+        pwd2: { type: String, bcrypt: true, select: false },
+        pwd3: { type: String }
       });
       TestSchema2.plugin(require('../index'));
       Test2 = mongoose.model('Test2', TestSchema2);
@@ -142,7 +148,8 @@ describe('mongoose-bcrypt', function() {
           name: 'test',
           pwd0: testPwds[0],
           pwd1: testPwds[1],
-          pwd2: testPwds[2]
+          pwd2: testPwds[2],
+          pwd3: testPwds[3]
         }).save(function(err,test){
           should.not.exist(err);
           test2 = test;
@@ -168,7 +175,7 @@ describe('mongoose-bcrypt', function() {
           var pwd = testPwds[i];
           Test2[encrypt[i]](pwd, function(err, hash){
             should.not.exist(err);
-            bcrypt.compareSync(pwd,hash).should.be.true;
+            bcrypt.compareSync(pwd,hash).should.be.true();
             if (--count == 0)
               done();
           });
@@ -181,7 +188,7 @@ describe('mongoose-bcrypt', function() {
           var pwd = testPwds[index];
           return Test2[encrypt[index]](pwd)
           .then(function(hash) {
-            bcrypt.compareSync(pwd,hash).should.be.true;
+            bcrypt.compareSync(pwd,hash).should.be.true();
           });
       })
       .catch(function(err) {
@@ -194,7 +201,7 @@ describe('mongoose-bcrypt', function() {
       for (var i = 0, len = count; i < len; i++) {
         test2[verify[i]](testPwds[i], function(err, isMatch){
           should.not.exist(err);
-          isMatch.should.be.true;
+          isMatch.should.be.true();
           if (--count == 0)
             done();
         });
@@ -207,7 +214,7 @@ describe('mongoose-bcrypt', function() {
       }).then(function(results) {
         results.length.should.equal(fields.length);
         results.forEach(function(isMatch) {
-          isMatch.should.be.true;
+          isMatch.should.be.true();
         });
       }).catch(function(err) {
         should.fail(err);
@@ -219,7 +226,7 @@ describe('mongoose-bcrypt', function() {
       for (var i = 0, len = count; i < len; i++) {
         test2[verify[i]](testPwds[i]+'bogus', function(err, isMatch){
           should.not.exist(err);
-          isMatch.should.be.false;
+          isMatch.should.be.false();
           if (--count == 0)
             done();
         });
@@ -232,7 +239,7 @@ describe('mongoose-bcrypt', function() {
       }).then(function(results) {
         results.length.should.equal(fields.length);
         results.forEach(function(isMatch) {
-          isMatch.should.be.false;
+          isMatch.should.be.false();
         });
       }).catch(function(err) {
         should.fail(err);
@@ -241,23 +248,23 @@ describe('mongoose-bcrypt', function() {
 
     it ('should accept valid field values (sync)', function(done) {
       for (var i = 0, len = fields.length; i < len; i++) {
-        test2[verify[i] + "Sync"](testPwds[i]).should.be.true;
+        test2[verify[i] + "Sync"](testPwds[i]).should.be.true();
       }
       done();
     });
 
     it ('should reject invalid field values (sync)', function(done) {
       for (var i = 0, len = fields.length; i < len; i++) {
-        test2[verify[i] + "Sync"](testPwds[i]+'bogus').should.be.false;
+        test2[verify[i] + "Sync"](testPwds[i]+'bogus').should.be.false();
       }
       done();
     });
 
     it ('should not encrypt unmarked fields', function(done){
-      test2.pwd2.should.equal(testPwds[2]);
-      bcrypt.getRounds(test2.pwd2).should.be.NaN;
-      (test2.verifyPwd2 == undefined).should.be.true;
-      (test2.verifyPwd2Sync == undefined).should.be.true;
+      test2.pwd3.should.equal(testPwds[3]);
+      bcrypt.getRounds(test2.pwd3).should.be.NaN;
+      (test2.verifyPwd3 == undefined).should.be.true();
+      (test2.verifyPwd3Sync == undefined).should.be.true();
       done();
     });
 
@@ -278,7 +285,7 @@ describe('mongoose-bcrypt', function() {
       });
       TestSchema3.plugin(require('../index'), { fields: ['pwd0', 'pwd1', 'pwd2'], rounds: 8 });
       for (var i = 0, len = fields.length; i < len; i++) {
-        (TestSchema3.path(fields[i]) == undefined).should.be.false;
+        (TestSchema3.path(fields[i]) == undefined).should.be.false();
       }
       Test3 = mongoose.model('Test3', TestSchema3);
       Test3.remove(function(){
@@ -315,7 +322,7 @@ describe('mongoose-bcrypt', function() {
           var pwd = testPwds[i];
           Test3[encrypt[i]](pwd, function(err, hash){
             should.not.exist(err);
-            bcrypt.compareSync(pwd,hash).should.be.true;
+            bcrypt.compareSync(pwd,hash).should.be.true();
             if (--count == 0)
               done();
           });
@@ -327,8 +334,8 @@ describe('mongoose-bcrypt', function() {
       var count = fields.length;
       for (var i = 0, len = count; i < len; i++) {
         test3[verify[i]](testPwds[i], function(err, isMatch){
-          (err == null).should.be.true;
-          isMatch.should.be.true;
+          (err == null).should.be.true();
+          isMatch.should.be.true();
           if (--count == 0)
             done();
         });
@@ -339,8 +346,8 @@ describe('mongoose-bcrypt', function() {
       var count = fields.length;
       for (var i = 0, len = count; i < len; i++) {
         test3[verify[i]](testPwds[i]+'bogus', function(err, isMatch){
-          (err == null).should.be.true;
-          isMatch.should.be.false;
+          (err == null).should.be.true();
+          isMatch.should.be.false();
           if (--count == 0)
             done();
         });
@@ -349,14 +356,14 @@ describe('mongoose-bcrypt', function() {
 
     it ('should accept valid field values (sync)', function(done) {
       for (var i = 0, len = fields.length; i < len; i++) {
-        test3[verify[i] + "Sync"](testPwds[i]).should.be.true;
+        test3[verify[i] + "Sync"](testPwds[i]).should.be.true();
       }
       done();
     });
 
     it ('should reject invalid field values (sync)', function(done) {
       for (var i = 0, len = fields.length; i < len; i++) {
-        test3[verify[i] + "Sync"](testPwds[i]+'bogus').should.be.false;
+        test3[verify[i] + "Sync"](testPwds[i]+'bogus').should.be.false();
       }
       done();
     });
@@ -379,7 +386,7 @@ describe('mongoose-bcrypt', function() {
       });
       TestSchema4.plugin(require('../index'), { fields: ['nested.pwd1', 'nested.pwd2'], rounds: 8 });
       for (var i = 0, len = fields.length; i < len; i++) {
-        (TestSchema4.path(fields[i]) == undefined).should.be.false;
+        (TestSchema4.path(fields[i]) == undefined).should.be.false();
       }
       Test4 = mongoose.model('Test4', TestSchema4);
       Test4.remove(function(){
@@ -413,7 +420,7 @@ describe('mongoose-bcrypt', function() {
           var pwd = testPwds[i];
           Test4[encrypt[i]](pwd, function(err, hash){
             should.not.exist(err);
-            bcrypt.compareSync(pwd,hash).should.be.true;
+            bcrypt.compareSync(pwd,hash).should.be.true();
             if (--count == 0)
               done();
           });
@@ -425,8 +432,8 @@ describe('mongoose-bcrypt', function() {
       var count = fields.length;
       for (var i = 0, len = count; i < len; i++) {
         test4[verify[i]](testPwds[i], function(err, isMatch){
-          (err == null).should.be.true;
-          isMatch.should.be.true;
+          (err == null).should.be.true();
+          isMatch.should.be.true();
           if (--count == 0)
             done();
         });
@@ -437,8 +444,8 @@ describe('mongoose-bcrypt', function() {
       var count = fields.length;
       for (var i = 0, len = count; i < len; i++) {
         test4[verify[i]](testPwds[i]+'bogus', function(err, isMatch){
-          (err == null).should.be.true;
-          isMatch.should.be.false;
+          (err == null).should.be.true();
+          isMatch.should.be.false();
           if (--count == 0)
             done();
         });
@@ -447,14 +454,14 @@ describe('mongoose-bcrypt', function() {
 
     it ('should accept valid field values (sync)', function(done) {
       for (var i = 0, len = fields.length; i < len; i++) {
-        test4[verify[i] + "Sync"](testPwds[i]).should.be.true;
+        test4[verify[i] + "Sync"](testPwds[i]).should.be.true();
       }
       done();
     });
 
     it ('should reject invalid field values (sync)', function(done) {
       for (var i = 0, len = fields.length; i < len; i++) {
-        test4[verify[i] + "Sync"](testPwds[i]+'bogus').should.be.false;
+        test4[verify[i] + "Sync"](testPwds[i]+'bogus').should.be.false();
       }
       done();
     });
@@ -464,6 +471,7 @@ describe('mongoose-bcrypt', function() {
     describe('Support update queries', function () {
       var testPwd = 'testPwd';
       var Test5, test5;
+      var Test6, test6;
 
       before(function (done) {
         var TestSchema5 = new mongoose.Schema({
@@ -471,13 +479,31 @@ describe('mongoose-bcrypt', function() {
         });
         TestSchema5.plugin(require('../index'));
         Test5 = mongoose.model('Test5', TestSchema5);
+        var TestSchema6 = new mongoose.Schema({
+          maindoc: String,
+          subdocs: {type: [TestSchema5], default:[]}
+        });
+        TestSchema6.plugin(require('../index'));
+        Test6 = mongoose.model('Test6', TestSchema6);
         Test5.remove(function () {
           new Test5({
             name: 'test',
             password: testPwd
           }).save(function (err, test) {
-            test5 = test;
-            done();
+            var subdoc = {
+              name: 'subdoc1',
+              password: testPwd
+            };
+            Test6.remove(function() {
+              test6 = new Test6({
+                maindoc: 'main',
+              });
+              test6.subdocs.push(subdoc);
+              test6.save(function (err, test) {
+                test6 = test;
+                done();
+              });
+            });
           });
         })
       });
@@ -490,7 +516,7 @@ describe('mongoose-bcrypt', function() {
             results.forEach(function (test) {
               test.verifyPassword(updatedPassword, function (err, isMatch) {
                 should.not.exist(err);
-                isMatch.should.be.true;
+                isMatch.should.be.true();
                 done();
               });
             })
@@ -506,7 +532,7 @@ describe('mongoose-bcrypt', function() {
             results.forEach(function (test) {
               test.verifyPassword(updatedPassword, function (err, isMatch) {
                 should.not.exist(err);
-                isMatch.should.be.true;
+                isMatch.should.be.true();
                 done();
               });
             })
@@ -522,11 +548,24 @@ describe('mongoose-bcrypt', function() {
             results.forEach(function (test) {
               test.verifyPassword(updatedPassword, function (err, isMatch) {
                 should.not.exist(err);
-                isMatch.should.be.true;
+                isMatch.should.be.true();
                 done();
               });
             })
           })
+        });
+      });
+
+      it('should clear hash when find and updating with empty password ', function (done) {
+        var updatedPassword = null;
+        Test5.findOneAndUpdate({name: 'test'}, {password: updatedPassword}, function (err) {
+          should.not.exist(err);
+          Test5.find({}, function (err, results) {
+            results.forEach(function (test) {
+              test.password.should.be.empty();
+              done();
+            });
+          });
         });
       });
 
@@ -538,13 +577,44 @@ describe('mongoose-bcrypt', function() {
             results.forEach(function (test) {
               test.verifyPassword(updatedPassword, function (err, isMatch) {
                 should.not.exist(err);
-                isMatch.should.be.true;
+                isMatch.should.be.true();
                 done();
               });
             })
           })
         });
       });
+
+      it('should clear hash when find and updating using $set with empty password ', function (done) {
+        var updatedPassword = null;
+        Test5.findOneAndUpdate({name: 'test'}, {$set: {password: updatedPassword}}, function (err) {
+          should.not.exist(err);
+          Test5.find({}, function (err, results) {
+            results.forEach(function (test) {
+              test.password.should.be.empty();
+              done();
+            });
+          });
+        });
+      });
+
+      // it('should encrypt password in subdocs when find and updating', function (done) {
+      //   test6.subdocs[0].verifyPasswordSync(testPwd).should.be.true();
+      //   var newPassword = 'testPwd2';
+      //   var newSubdoc = new Test5({ name: 'newSubdoc', password: newPassword}, );
+      //   Test6.findOneAndUpdate({_id: test6._id}, {$push: {subdocs: newSubdoc}}, {new: true}, function(err) {
+      //     should.not.exist(err);
+      //     Test6.find({}, function(err, results) {
+      //       results.forEach(function (test) {
+      //         test.subdocs.length.should.equal(2);
+      //         test.subdocs[0].verifyPasswordSync(testPwd).should.be.true();
+      //         test.subdocs[1].verifyPasswordSync(newPassword).should.be.true();
+      //         done();
+      //       })
+      //     })
+      //   })
+      // });
+
     });
   }
 });

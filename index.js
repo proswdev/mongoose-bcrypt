@@ -82,7 +82,7 @@ module.exports = function(schema, options) {
   });
 
   // Hash all modified encrypted fields upon saving the model
-  schema.pre('save', function preSavePassword(next) {
+  schema.pre('save', function (next) {
     var model = this;
     var changed = [];
 
@@ -97,12 +97,19 @@ module.exports = function(schema, options) {
     var count = changed.length;
     if (count > 0) {
       changed.forEach(function(field){
-        encrypt(field, model.get(field), function(err, hash) {
-          if (err) return next(err);
-          model.set(field, hash);
+        var value = model.get(field);
+        if (typeof value === 'string') {
+          encrypt(field, value, function(err, hash) {
+            if (err) return next(err);
+            model.set(field, hash);
+            if (--count === 0)
+              next();
+          });
+        } else {
+          model.set(field, '');
           if (--count === 0)
             next();
-        });
+        }
       });
     } else {
       next();
@@ -117,20 +124,27 @@ module.exports = function(schema, options) {
     }
     var changed = [];
     fields.forEach(function(field){
-      if (update[field]) {
+      if (update[field] !== undefined) {
         changed.push(field);
       }
     });
     var count = changed.length;
     if (count > 0) {
       changed.forEach(function(field){
-        encrypt(field, update[field], function(err, hash) {
-          if (err) return next(err);
-          update[field] = hash;
+        if (typeof update[field] === 'string') {
+          encrypt(field, update[field], function(err, hash) {
+            if (err) return next(err);
+            update[field] = hash;
+            if (--count === 0) {
+              next();
+            }
+          });
+        } else {
+          update[field] = '';
           if (--count === 0) {
             next();
           }
-        });
+        }
       });
     } else {
         next();
