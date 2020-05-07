@@ -5,12 +5,33 @@ var mongoose = require('mongoose');
 var bcrypt = require('bcryptjs');
 var semver = require('semver');
 mongoose.Promise = global.Promise = require('bluebird');
+mongoose.set('useFindAndModify', false);
+
+function deleteMany(model, cond, opt, cb) {
+  if (model.deleteMany) {
+    model.deleteMany(cond, opt, cb);
+  } else {
+    model.remove(cond, opt, cb);
+  }
+}
 
 describe('mongoose-bcrypt', function() {
   var defaultRounds;
 
   before(function(done){
-    mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true });
+    var options;
+    if (semver.lt(mongoose.version, "5.0.0")) {
+      options = { useMongoClient: true };
+    } else {
+      options = {};
+      if (semver.gte(mongoose.version, "5.2.0")) {
+        options.useNewUrlParser = true;
+      }
+      if (semver.gte(mongoose.version, "5.3.0")) {
+        options.useUnifiedTopology = true;
+      }
+    }
+    mongoose.connect('mongodb://localhost:27017/test', options);
     defaultRounds = bcrypt.getRounds(bcrypt.hashSync('test'));
     done();
   });
@@ -30,7 +51,7 @@ describe('mongoose-bcrypt', function() {
       TestSchema1.plugin(require('../index'));
       (TestSchema1.path('password') == undefined).should.be.false();
       Test1 = mongoose.model('Test1', TestSchema1);
-      Test1.remove(function(){
+      deleteMany(Test1, function(){
         new Test1({
           name: 'test',
           password: testPwd
@@ -143,7 +164,7 @@ describe('mongoose-bcrypt', function() {
       });
       TestSchema2.plugin(require('../index'));
       Test2 = mongoose.model('Test2', TestSchema2);
-      Test2.remove(function(){
+      deleteMany(Test2, function(){
         new Test2({
           name: 'test',
           pwd0: testPwds[0],
@@ -288,7 +309,7 @@ describe('mongoose-bcrypt', function() {
         (TestSchema3.path(fields[i]) == undefined).should.be.false();
       }
       Test3 = mongoose.model('Test3', TestSchema3);
-      Test3.remove(function(){
+      deleteMany(Test3, function(){
         new Test3({
           name: 'test',
           pwd0: testPwds[0],
@@ -389,7 +410,7 @@ describe('mongoose-bcrypt', function() {
         (TestSchema4.path(fields[i]) == undefined).should.be.false();
       }
       Test4 = mongoose.model('Test4', TestSchema4);
-      Test4.remove(function(){
+      deleteMany(Test4, function(){
         new Test4({
           nested: {
             pwd0: testPwds[0],
@@ -485,7 +506,7 @@ describe('mongoose-bcrypt', function() {
         });
         TestSchema6.plugin(require('../index'));
         Test6 = mongoose.model('Test6', TestSchema6);
-        Test5.remove(function () {
+        deleteMany(Test5, function () {
           new Test5({
             name: 'test',
             password: testPwd
@@ -494,7 +515,7 @@ describe('mongoose-bcrypt', function() {
               name: 'subdoc1',
               password: testPwd
             };
-            Test6.remove(function() {
+            deleteMany(Test6, function() {
               test6 = new Test6({
                 maindoc: 'main',
               });
@@ -508,37 +529,108 @@ describe('mongoose-bcrypt', function() {
         })
       });
 
-      it('should encrypt password when updating', function (done) {
-        var updatedPassword = 'testPwd2';
-        Test5.update({}, {password: updatedPassword}, function (err) {
-          should.not.exist(err);
-          Test5.find({}, function (err, results) {
-            results.forEach(function (test) {
-              test.verifyPassword(updatedPassword, function (err, isMatch) {
-                should.not.exist(err);
-                isMatch.should.be.true();
-                done();
-              });
-            })
-          })
-        });
-      });
+      if (semver.lt(mongoose.version, "5.0.0")) {
 
-      it('should encrypt password when updating using $set', function (done) {
-        var updatedPassword = 'testPwd2';
-        Test5.update({}, {$set: {password: updatedPassword}}, function (err) {
-          should.not.exist(err);
-          Test5.find({}, function (err, results) {
-            results.forEach(function (test) {
-              test.verifyPassword(updatedPassword, function (err, isMatch) {
-                should.not.exist(err);
-                isMatch.should.be.true();
-                done();
-              });
+        it('should encrypt password when updating with update', function (done) {
+          var updatedPassword = 'testPwd2';
+          Test5.update({}, {password: updatedPassword}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.verifyPassword(updatedPassword, function (err, isMatch) {
+                  should.not.exist(err);
+                  isMatch.should.be.true();
+                  done();
+                });
+              })
             })
-          })
+          });
         });
-      });
+
+        it('should encrypt password when updating with update & $set', function (done) {
+          var updatedPassword = 'testPwd2';
+          Test5.update({}, {$set: {password: updatedPassword}}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.verifyPassword(updatedPassword, function (err, isMatch) {
+                  should.not.exist(err);
+                  isMatch.should.be.true();
+                  done();
+                });
+              })
+            })
+          });
+
+        });
+      }
+
+      if (semver.gte(mongoose.version, "4.8.0")) {
+
+        it('should encrypt password when updating with updateOne', function (done) {
+          var updatedPassword = 'testPwd2';
+          Test5.updateOne({}, {password: updatedPassword}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.verifyPassword(updatedPassword, function (err, isMatch) {
+                  should.not.exist(err);
+                  isMatch.should.be.true();
+                  done();
+                });
+              })
+            })
+          });
+        });
+
+        it('should encrypt password when updating with updateOne & $set', function (done) {
+          var updatedPassword = 'testPwd2';
+          Test5.updateOne({}, {$set: {password: updatedPassword}}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.verifyPassword(updatedPassword, function (err, isMatch) {
+                  should.not.exist(err);
+                  isMatch.should.be.true();
+                  done();
+                });
+              })
+            })
+          });
+        });
+
+        it('should encrypt password when updating with updateMany', function (done) {
+          var updatedPassword = 'testPwd2';
+          Test5.updateMany({}, {password: updatedPassword}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.verifyPassword(updatedPassword, function (err, isMatch) {
+                  should.not.exist(err);
+                  isMatch.should.be.true();
+                  done();
+                });
+              })
+            })
+          });
+        });
+
+        it('should encrypt password when updating with updateMany & $set', function (done) {
+          var updatedPassword = 'testPwd2';
+          Test5.updateMany({}, {$set: {password: updatedPassword}}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.verifyPassword(updatedPassword, function (err, isMatch) {
+                  should.not.exist(err);
+                  isMatch.should.be.true();
+                  done();
+                });
+              })
+            })
+          });
+        });
+      }
 
       it('should encrypt password when find and updating', function (done) {
         var updatedPassword = 'testPwd2';

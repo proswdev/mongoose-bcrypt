@@ -153,6 +153,8 @@ module.exports = function(schema, options) {
 
   if (semver.gte(mongoose.version, "4.1.3")) {
       schema.pre('update', preUpdate);
+      schema.pre('updateOne', preUpdate);
+      schema.pre('updateMany', preUpdate);
       schema.pre('findOneAndUpdate', preUpdate);
   }
 
