@@ -1,5 +1,7 @@
 os: osx
 language: node_js
+services:
+  - mongodb
 node_js:
   - "8"
   - "10"
