@@ -1,3 +1,8 @@
+![npm](https://img.shields.io/npm/v/mongoose-bcrypt)
+[![Build Status](https://travis-ci.org/proswdev/mongoose-bcrypt.svg?branch=master)](https://travis-ci.org/proswdev/mongoose-bcrypt)
+[![Coverage Status](https://coveralls.io/repos/github/proswdev/mongoose-bcrypt/badge.svg)](https://coveralls.io/github/proswdev/mongoose-bcrypt)
+![NPM](https://img.shields.io/npm/l/mongoose-bcrypt)
+![npm](https://img.shields.io/npm/dw/mongoose-bcrypt)
 # mongoose-bcrypt #
 
 Mongoose plugin encrypting field(s) with bcrypt and providing methods to encrypt and verify.
