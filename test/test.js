@@ -31,7 +31,7 @@ describe('mongoose-bcrypt', function() {
         options.useUnifiedTopology = true;
       }
     }
-    mongoose.connect('mongodb://localhost:27017/test', options);
+    mongoose.connect('mongodb://127.0.0.1:27017/test', options);
     defaultRounds = bcrypt.getRounds(bcrypt.hashSync('test'));
     done();
   });
