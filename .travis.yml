@@ -1,4 +1,4 @@
-os: osx
+dist: precise
 language: node_js
 services:
   - mongodb
