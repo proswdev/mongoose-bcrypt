@@ -9,8 +9,10 @@ mongoose.set('useFindAndModify', false);
 
 function deleteMany(model, cond, opt, cb) {
   if (model.deleteMany) {
+    console.log('using deleteMany');
     model.deleteMany(cond, opt, cb);
   } else {
+    console.log('using remove');
     model.remove(cond, opt, cb);
   }
 }
