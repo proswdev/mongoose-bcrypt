@@ -8,7 +8,6 @@ mongoose.Promise = global.Promise = require('bluebird');
 mongoose.set('useFindAndModify', false);
 
 function deleteMany(model, cond, opt, cb) {
-  model.callBogus();
   if (model.deleteMany) {
     model.deleteMany(cond, opt, cb);
   } else {
