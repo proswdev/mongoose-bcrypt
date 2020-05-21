@@ -9,10 +9,8 @@ mongoose.set('useFindAndModify', false);
 
 function deleteMany(model, cond, opt, cb) {
   if (model.deleteMany) {
-    console.log('using deleteMany');
     model.deleteMany(cond, opt, cb);
   } else {
-    console.log('using remove');
     model.remove(cond, opt, cb);
   }
 }
@@ -21,7 +19,6 @@ describe('mongoose-bcrypt', function() {
   var defaultRounds;
 
   before(function(done){
-    console.log('mongoose version: ' + mongoose.version);
     var options;
     if (semver.lt(mongoose.version, "5.0.0")) {
       options = { useMongoClient: true };
@@ -63,39 +60,16 @@ describe('mongoose-bcrypt', function() {
       TestSchema1.plugin(require('../index'));
       (TestSchema1.path('password') == undefined).should.be.false();
       Test1 = mongoose.model('Test1', TestSchema1);
-      try {
-        deleteMany(Test1, function(){
-          var test = new Test1({
-            name: 'test',
-            password: testPwd
-          });
-          if (test) {
-            console.log('test looks ' + (test.save ? 'OK' : 'NOK'));
-            test.save(function(err, test) {
-              console.log('save cb ' + (err? 'NOK' : 'OK'));
-              should.not.exist(err);
-              test1 = test;
-              done();
-            })
-          } else {
-            console.log('test not there');
-          }
+      deleteMany(Test1, function(){
+        new Test1({
+          name: 'test',
+          password: testPwd
+        }).save(function(err, test) {
+          should.not.exist(err);
+          test1 = test;
+          done();
         });
-          // new Test1({
-          //   name: 'test',
-          //   password: testPwd
-          // }).save(function(err, test) {
-          //   should.not.exist(err);
-          //   test1 = test;
-          //   done();
-          // });
-        // })
-      }
-      catch (err) {
-        console.log("Error: " + err.message);
-        true.should.be.false();
-        done();
-      }
+      });
     });
 
     it ('should encrypt password with default rounds', function(done){
