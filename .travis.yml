@@ -8,6 +8,6 @@ node_js:
   - "12"
   - "14"
 before_script:
-  - sleep 15
+  - sleep 5
 script: npm run coverage
 after_success: 'npm run coveralls'
