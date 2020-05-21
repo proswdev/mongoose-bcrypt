@@ -89,9 +89,12 @@ describe('mongoose-bcrypt', function() {
     });
 
     it ('should accept valid password using callback', function(done) {
+      var promise = Promise;
+      Promise = null;
       test1.verifyPassword(testPwd, function(err, isMatch){
         should.not.exist(err);
         isMatch.should.be.true;
+        Promise = promise;
         done();
       });
     });
@@ -159,11 +162,11 @@ describe('mongoose-bcrypt', function() {
         name: String,
         value: Number,
         pwd0: { type: String, bcrypt: true },
-        pwd1: { type: String, required: true, bcrypt: true, rounds: 7},
+        pwd1: { type: String, required: true, rounds: 7},
         pwd2: { type: String, bcrypt: true, select: false },
         pwd3: { type: String }
       });
-      TestSchema2.plugin(require('../index'));
+      TestSchema2.plugin(require('../index'), { fields: 'pwd1' });
       Test2 = mongoose.model('Test2', TestSchema2);
       deleteMany(Test2, function(){
         new Test2({
@@ -533,7 +536,7 @@ describe('mongoose-bcrypt', function() {
       if (semver.lt(mongoose.version, "5.0.0")) {
 
         it('should encrypt password when updating with update', function (done) {
-          var updatedPassword = 'testPwd2';
+          var updatedPassword = 'testPwd2a';
           Test5.update({}, {password: updatedPassword}, function (err) {
             should.not.exist(err);
             Test5.find({}, function (err, results) {
@@ -549,7 +552,7 @@ describe('mongoose-bcrypt', function() {
         });
 
         it('should encrypt password when updating with update & $set', function (done) {
-          var updatedPassword = 'testPwd2';
+          var updatedPassword = 'testPwd2b';
           Test5.update({}, {$set: {password: updatedPassword}}, function (err) {
             should.not.exist(err);
             Test5.find({}, function (err, results) {
@@ -562,8 +565,27 @@ describe('mongoose-bcrypt', function() {
               })
             })
           });
-
         });
+
+        it('should encrypt password when promises not available', function (done) {
+          var promise = Promise;
+          Promise = null;
+          var updatedPassword = 'testPwd2c';
+          Test5.update({}, {password: updatedPassword}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.verifyPassword(updatedPassword, function (err, isMatch) {
+                  should.not.exist(err);
+                  isMatch.should.be.true();
+                  Promise = promise;
+                  done();
+                });
+              })
+            })
+          });
+        });
+
       }
 
       if (semver.gte(mongoose.version, "4.8.0")) {
@@ -593,6 +615,25 @@ describe('mongoose-bcrypt', function() {
                 test.verifyPassword(updatedPassword, function (err, isMatch) {
                   should.not.exist(err);
                   isMatch.should.be.true();
+                  done();
+                });
+              })
+            })
+          });
+        });
+
+        it('should encrypt password when promises not available', function (done) {
+          var promise = Promise;
+          Promise = null;
+          var updatedPassword = 'testPwd2c';
+          Test5.updateOne({}, {password: updatedPassword}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.verifyPassword(updatedPassword, function (err, isMatch) {
+                  should.not.exist(err);
+                  isMatch.should.be.true();
+                  Promise = promise;
                   done();
                 });
               })
