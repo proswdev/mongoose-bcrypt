@@ -34,6 +34,8 @@ describe('mongoose-bcrypt', function() {
         options.useUnifiedTopology = true;
       }
     }
+    defaultRounds = bcrypt.getRounds(bcrypt.hashSync('test'));
+    console.log('connecting mongodb');
     mongoose.connect('mongodb://127.0.0.1:27017/test', options, function(err, db) {
       if (err) {
         console.log('Connection error: ' + err.message);
@@ -42,9 +44,8 @@ describe('mongoose-bcrypt', function() {
       } else {
         console.log('Connection FAILED');
       }
+      done();
     });
-    defaultRounds = bcrypt.getRounds(bcrypt.hashSync('test'));
-    done();
   });
 
   after(function(done) {
