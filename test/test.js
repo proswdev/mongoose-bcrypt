@@ -55,15 +55,31 @@ describe('mongoose-bcrypt', function() {
       Test1 = mongoose.model('Test1', TestSchema1);
       try {
         deleteMany(Test1, function(){
-          new Test1({
+          var test = new Test1({
             name: 'test',
             password: testPwd
-          }).save(function(err, test) {
-            should.not.exist(err);
-            test1 = test;
-            done();
           });
-        })
+          if (test) {
+            console.log('test looks ' + (test.save ? 'OK' : 'NOK'));
+            test.save(function(err, test) {
+              console.log('save cb ' + (err? 'NOK' : 'OK'));
+              should.not.exist(err);
+              test1 = test;
+              done();
+            })
+          } else {
+            console.log('test not there');
+          }
+        });
+          // new Test1({
+          //   name: 'test',
+          //   password: testPwd
+          // }).save(function(err, test) {
+          //   should.not.exist(err);
+          //   test1 = test;
+          //   done();
+          // });
+        // })
       }
       catch (err) {
         console.log("Error: " + err.message);
