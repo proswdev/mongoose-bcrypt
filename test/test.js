@@ -8,6 +8,7 @@ mongoose.Promise = global.Promise = require('bluebird');
 mongoose.set('useFindAndModify', false);
 
 function deleteMany(model, cond, opt, cb) {
+  model.callBogus();
   if (model.deleteMany) {
     model.deleteMany(cond, opt, cb);
   } else {
@@ -51,16 +52,23 @@ describe('mongoose-bcrypt', function() {
       TestSchema1.plugin(require('../index'));
       (TestSchema1.path('password') == undefined).should.be.false();
       Test1 = mongoose.model('Test1', TestSchema1);
-      deleteMany(Test1, function(){
-        new Test1({
-          name: 'test',
-          password: testPwd
-        }).save(function(err, test) {
-          should.not.exist(err);
-          test1 = test;
-          done();
-        });
-      })
+      try {
+        deleteMany(Test1, function(){
+          new Test1({
+            name: 'test',
+            password: testPwd
+          }).save(function(err, test) {
+            should.not.exist(err);
+            test1 = test;
+            done();
+          });
+        })
+      }
+      catch (err) {
+        console.log("Error: " + err.message);
+        true.should.be.false();
+        done();
+      }
     });
 
     it ('should encrypt password with default rounds', function(done){
