@@ -21,6 +21,7 @@ describe('mongoose-bcrypt', function() {
   var defaultRounds;
 
   before(function(done){
+    console.log('mongoose version: ' + mongoose.version);
     var options;
     if (semver.lt(mongoose.version, "5.0.0")) {
       options = { useMongoClient: true };
