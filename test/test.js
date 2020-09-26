@@ -493,262 +493,273 @@ describe('mongoose-bcrypt', function() {
   });
 
   if (semver.gte(mongoose.version, "4.1.3")) {
-    describe('Support update queries', function () {
-      var testPwd = 'testPwd';
-      var Test5, test5;
-      var Test6, test6;
+    function testUpdates(timestamps) {
+      var postfix = timestamps ? 'b' : 'a';
+      var title = 'Support update queries';
+      if (timestamps) {
+        title += ' with timestamps';
+      }
+      describe(title, function () {
+        var testPwd = 'testPwd';
+        var Test5, test5;
+        var Test6, test6;
 
-      before(function (done) {
-        var TestSchema5 = new mongoose.Schema({
-          name: String
-        });
-        TestSchema5.plugin(require('../index'));
-        Test5 = mongoose.model('Test5', TestSchema5);
-        var TestSchema6 = new mongoose.Schema({
-          maindoc: String,
-          subdocs: {type: [TestSchema5], default:[]}
-        });
-        TestSchema6.plugin(require('../index'));
-        Test6 = mongoose.model('Test6', TestSchema6);
-        deleteMany(Test5, function () {
-          new Test5({
-            name: 'test',
-            password: testPwd
-          }).save(function (err, test) {
-            var subdoc = {
-              name: 'subdoc1',
+        before(function (done) {
+          var TestSchema5 = new mongoose.Schema({
+            name: String
+          }, {
+            timestamps: timestamps
+          });
+          TestSchema5.plugin(require('../index'));
+          Test5 = mongoose.model('Test5' + postfix, TestSchema5);
+          var TestSchema6 = new mongoose.Schema({
+            maindoc: String,
+            subdocs: {type: [TestSchema5], default:[]}
+          });
+          TestSchema6.plugin(require('../index'));
+          Test6 = mongoose.model('Test6' + postfix, TestSchema6);
+          deleteMany(Test5, function () {
+            new Test5({
+              name: 'test',
               password: testPwd
-            };
-            deleteMany(Test6, function() {
-              test6 = new Test6({
-                maindoc: 'main',
-              });
-              test6.subdocs.push(subdoc);
-              test6.save(function (err, test) {
-                test6 = test;
-                done();
+            }).save(function (err, test) {
+              var subdoc = {
+                name: 'subdoc1',
+                password: testPwd
+              };
+              deleteMany(Test6, function() {
+                test6 = new Test6({
+                  maindoc: 'main',
+                });
+                test6.subdocs.push(subdoc);
+                test6.save(function (err, test) {
+                  test6 = test;
+                  done();
+                });
               });
             });
-          });
-        })
-      });
-
-      if (semver.lt(mongoose.version, "5.0.0")) {
-
-        it('should encrypt password when updating with update', function (done) {
-          var updatedPassword = 'testPwd2a';
-          Test5.update({}, {password: updatedPassword}, function (err) {
-            should.not.exist(err);
-            Test5.find({}, function (err, results) {
-              results.forEach(function (test) {
-                test.verifyPassword(updatedPassword, function (err, isMatch) {
-                  should.not.exist(err);
-                  isMatch.should.be.true();
-                  done();
-                });
-              })
-            })
-          });
-        });
-
-        it('should encrypt password when updating with update & $set', function (done) {
-          var updatedPassword = 'testPwd2b';
-          Test5.update({}, {$set: {password: updatedPassword}}, function (err) {
-            should.not.exist(err);
-            Test5.find({}, function (err, results) {
-              results.forEach(function (test) {
-                test.verifyPassword(updatedPassword, function (err, isMatch) {
-                  should.not.exist(err);
-                  isMatch.should.be.true();
-                  done();
-                });
-              })
-            })
-          });
-        });
-
-        it('should encrypt password when promises not available', function (done) {
-          var promise = Promise;
-          Promise = null;
-          var updatedPassword = 'testPwd2c';
-          Test5.update({}, {password: updatedPassword}, function (err) {
-            should.not.exist(err);
-            Test5.find({}, function (err, results) {
-              results.forEach(function (test) {
-                test.verifyPassword(updatedPassword, function (err, isMatch) {
-                  should.not.exist(err);
-                  isMatch.should.be.true();
-                  Promise = promise;
-                  done();
-                });
-              })
-            })
-          });
-        });
-
-      }
-
-      if (semver.gte(mongoose.version, "4.8.0")) {
-
-        it('should encrypt password when updating with updateOne', function (done) {
-          var updatedPassword = 'testPwd2';
-          Test5.updateOne({}, {password: updatedPassword}, function (err) {
-            should.not.exist(err);
-            Test5.find({}, function (err, results) {
-              results.forEach(function (test) {
-                test.verifyPassword(updatedPassword, function (err, isMatch) {
-                  should.not.exist(err);
-                  isMatch.should.be.true();
-                  done();
-                });
-              })
-            })
-          });
-        });
-
-        it('should encrypt password when updating with updateOne & $set', function (done) {
-          var updatedPassword = 'testPwd2';
-          Test5.updateOne({}, {$set: {password: updatedPassword}}, function (err) {
-            should.not.exist(err);
-            Test5.find({}, function (err, results) {
-              results.forEach(function (test) {
-                test.verifyPassword(updatedPassword, function (err, isMatch) {
-                  should.not.exist(err);
-                  isMatch.should.be.true();
-                  done();
-                });
-              })
-            })
-          });
-        });
-
-        it('should encrypt password when promises not available', function (done) {
-          var promise = Promise;
-          Promise = null;
-          var updatedPassword = 'testPwd2c';
-          Test5.updateOne({}, {password: updatedPassword}, function (err) {
-            should.not.exist(err);
-            Test5.find({}, function (err, results) {
-              results.forEach(function (test) {
-                test.verifyPassword(updatedPassword, function (err, isMatch) {
-                  should.not.exist(err);
-                  isMatch.should.be.true();
-                  Promise = promise;
-                  done();
-                });
-              })
-            })
-          });
-        });
-
-        it('should encrypt password when updating with updateMany', function (done) {
-          var updatedPassword = 'testPwd2';
-          Test5.updateMany({}, {password: updatedPassword}, function (err) {
-            should.not.exist(err);
-            Test5.find({}, function (err, results) {
-              results.forEach(function (test) {
-                test.verifyPassword(updatedPassword, function (err, isMatch) {
-                  should.not.exist(err);
-                  isMatch.should.be.true();
-                  done();
-                });
-              })
-            })
-          });
-        });
-
-        it('should encrypt password when updating with updateMany & $set', function (done) {
-          var updatedPassword = 'testPwd2';
-          Test5.updateMany({}, {$set: {password: updatedPassword}}, function (err) {
-            should.not.exist(err);
-            Test5.find({}, function (err, results) {
-              results.forEach(function (test) {
-                test.verifyPassword(updatedPassword, function (err, isMatch) {
-                  should.not.exist(err);
-                  isMatch.should.be.true();
-                  done();
-                });
-              })
-            })
-          });
-        });
-      }
-
-      it('should encrypt password when find and updating', function (done) {
-        var updatedPassword = 'testPwd2';
-        Test5.findOneAndUpdate({name: 'test'}, {password: updatedPassword}, function (err) {
-          should.not.exist(err);
-          Test5.find({}, function (err, results) {
-            results.forEach(function (test) {
-              test.verifyPassword(updatedPassword, function (err, isMatch) {
-                should.not.exist(err);
-                isMatch.should.be.true();
-                done();
-              });
-            })
           })
         });
-      });
 
-      it('should clear hash when find and updating with empty password ', function (done) {
-        var updatedPassword = null;
-        Test5.findOneAndUpdate({name: 'test'}, {password: updatedPassword}, function (err) {
-          should.not.exist(err);
-          Test5.find({}, function (err, results) {
-            results.forEach(function (test) {
-              test.password.should.be.empty();
-              done();
+        if (semver.lt(mongoose.version, "5.0.0")) {
+
+          it('should encrypt password when updating with update', function (done) {
+            var updatedPassword = 'testPwd2a';
+            Test5.update({}, {password: updatedPassword}, function (err) {
+              should.not.exist(err);
+              Test5.find({}, function (err, results) {
+                results.forEach(function (test) {
+                  test.verifyPassword(updatedPassword, function (err, isMatch) {
+                    should.not.exist(err);
+                    isMatch.should.be.true();
+                    done();
+                  });
+                })
+              })
             });
           });
-        });
-      });
 
-      it('should encrypt password when find and updating using $set', function (done) {
-        var updatedPassword = 'testPwd2';
-        Test5.findOneAndUpdate({name: 'test'}, {$set: {password: updatedPassword}}, function (err) {
-          should.not.exist(err);
-          Test5.find({}, function (err, results) {
-            results.forEach(function (test) {
-              test.verifyPassword(updatedPassword, function (err, isMatch) {
-                should.not.exist(err);
-                isMatch.should.be.true();
+          it('should encrypt password when updating with update & $set', function (done) {
+            var updatedPassword = 'testPwd2b';
+            Test5.update({}, {$set: {password: updatedPassword}}, function (err) {
+              should.not.exist(err);
+              Test5.find({}, function (err, results) {
+                results.forEach(function (test) {
+                  test.verifyPassword(updatedPassword, function (err, isMatch) {
+                    should.not.exist(err);
+                    isMatch.should.be.true();
+                    done();
+                  });
+                })
+              })
+            });
+          });
+
+          it('should encrypt password when promises not available', function (done) {
+            var promise = Promise;
+            Promise = null;
+            var updatedPassword = 'testPwd2c';
+            Test5.update({}, {password: updatedPassword}, function (err) {
+              should.not.exist(err);
+              Test5.find({}, function (err, results) {
+                results.forEach(function (test) {
+                  test.verifyPassword(updatedPassword, function (err, isMatch) {
+                    should.not.exist(err);
+                    isMatch.should.be.true();
+                    Promise = promise;
+                    done();
+                  });
+                })
+              })
+            });
+          });
+
+        }
+
+        if (semver.gte(mongoose.version, "4.8.0")) {
+
+          it('should encrypt password when updating with updateOne', function (done) {
+            var updatedPassword = 'testPwd2';
+            Test5.updateOne({}, {password: updatedPassword}, function (err) {
+              should.not.exist(err);
+              Test5.find({}, function (err, results) {
+                results.forEach(function (test) {
+                  test.verifyPassword(updatedPassword, function (err, isMatch) {
+                    should.not.exist(err);
+                    isMatch.should.be.true();
+                    done();
+                  });
+                })
+              })
+            });
+          });
+
+          it('should encrypt password when updating with updateOne & $set', function (done) {
+            var updatedPassword = 'testPwd2';
+            Test5.updateOne({}, {$set: {password: updatedPassword}}, function (err) {
+              should.not.exist(err);
+              Test5.find({}, function (err, results) {
+                results.forEach(function (test) {
+                  test.verifyPassword(updatedPassword, function (err, isMatch) {
+                    should.not.exist(err);
+                    isMatch.should.be.true();
+                    done();
+                  });
+                })
+              })
+            });
+          });
+
+          it('should encrypt password when promises not available', function (done) {
+            var promise = Promise;
+            Promise = null;
+            var updatedPassword = 'testPwd2c';
+            Test5.updateOne({}, {password: updatedPassword}, function (err) {
+              should.not.exist(err);
+              Test5.find({}, function (err, results) {
+                results.forEach(function (test) {
+                  test.verifyPassword(updatedPassword, function (err, isMatch) {
+                    should.not.exist(err);
+                    isMatch.should.be.true();
+                    Promise = promise;
+                    done();
+                  });
+                })
+              })
+            });
+          });
+
+          it('should encrypt password when updating with updateMany', function (done) {
+            var updatedPassword = 'testPwd2';
+            Test5.updateMany({}, {password: updatedPassword}, function (err) {
+              should.not.exist(err);
+              Test5.find({}, function (err, results) {
+                results.forEach(function (test) {
+                  test.verifyPassword(updatedPassword, function (err, isMatch) {
+                    should.not.exist(err);
+                    isMatch.should.be.true();
+                    done();
+                  });
+                })
+              })
+            });
+          });
+
+          it('should encrypt password when updating with updateMany & $set', function (done) {
+            var updatedPassword = 'testPwd2';
+            Test5.updateMany({}, {$set: {password: updatedPassword}}, function (err) {
+              should.not.exist(err);
+              Test5.find({}, function (err, results) {
+                results.forEach(function (test) {
+                  test.verifyPassword(updatedPassword, function (err, isMatch) {
+                    should.not.exist(err);
+                    isMatch.should.be.true();
+                    done();
+                  });
+                })
+              })
+            });
+          });
+        }
+
+        it('should encrypt password when find and updating', function (done) {
+          var updatedPassword = 'testPwd2';
+          Test5.findOneAndUpdate({name: 'test'}, {password: updatedPassword}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.verifyPassword(updatedPassword, function (err, isMatch) {
+                  should.not.exist(err);
+                  isMatch.should.be.true();
+                  done();
+                });
+              })
+            })
+          });
+        });
+
+        it('should clear hash when find and updating with empty password ', function (done) {
+          var updatedPassword = null;
+          Test5.findOneAndUpdate({name: 'test'}, {password: updatedPassword}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.password.should.be.empty();
                 done();
               });
-            })
-          })
-        });
-      });
-
-      it('should clear hash when find and updating using $set with empty password ', function (done) {
-        var updatedPassword = null;
-        Test5.findOneAndUpdate({name: 'test'}, {$set: {password: updatedPassword}}, function (err) {
-          should.not.exist(err);
-          Test5.find({}, function (err, results) {
-            results.forEach(function (test) {
-              test.password.should.be.empty();
-              done();
             });
           });
         });
+
+        it('should encrypt password when find and updating using $set', function (done) {
+          var updatedPassword = 'testPwd2';
+          Test5.findOneAndUpdate({name: 'test'}, {$set: {password: updatedPassword}}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.verifyPassword(updatedPassword, function (err, isMatch) {
+                  should.not.exist(err);
+                  isMatch.should.be.true();
+                  done();
+                });
+              })
+            })
+          });
+        });
+
+        it('should clear hash when find and updating using $set with empty password ', function (done) {
+          var updatedPassword = null;
+          Test5.findOneAndUpdate({name: 'test'}, {$set: {password: updatedPassword}}, function (err) {
+            should.not.exist(err);
+            Test5.find({}, function (err, results) {
+              results.forEach(function (test) {
+                test.password.should.be.empty();
+                done();
+              });
+            });
+          });
+        });
+
+        // it('should encrypt password in subdocs when find and updating', function (done) {
+        //   test6.subdocs[0].verifyPasswordSync(testPwd).should.be.true();
+        //   var newPassword = 'testPwd2';
+        //   var newSubdoc = new Test5({ name: 'newSubdoc', password: newPassword}, );
+        //   Test6.findOneAndUpdate({_id: test6._id}, {$push: {subdocs: newSubdoc}}, {new: true}, function(err) {
+        //     should.not.exist(err);
+        //     Test6.find({}, function(err, results) {
+        //       results.forEach(function (test) {
+        //         test.subdocs.length.should.equal(2);
+        //         test.subdocs[0].verifyPasswordSync(testPwd).should.be.true();
+        //         test.subdocs[1].verifyPasswordSync(newPassword).should.be.true();
+        //         done();
+        //       })
+        //     })
+        //   })
+        // });
+
       });
-
-      // it('should encrypt password in subdocs when find and updating', function (done) {
-      //   test6.subdocs[0].verifyPasswordSync(testPwd).should.be.true();
-      //   var newPassword = 'testPwd2';
-      //   var newSubdoc = new Test5({ name: 'newSubdoc', password: newPassword}, );
-      //   Test6.findOneAndUpdate({_id: test6._id}, {$push: {subdocs: newSubdoc}}, {new: true}, function(err) {
-      //     should.not.exist(err);
-      //     Test6.find({}, function(err, results) {
-      //       results.forEach(function (test) {
-      //         test.subdocs.length.should.equal(2);
-      //         test.subdocs[0].verifyPasswordSync(testPwd).should.be.true();
-      //         test.subdocs[1].verifyPasswordSync(newPassword).should.be.true();
-      //         done();
-      //       })
-      //     })
-      //   })
-      // });
-
-    });
+    }
+    testUpdates(false);
+    testUpdates(true);
   }
 });

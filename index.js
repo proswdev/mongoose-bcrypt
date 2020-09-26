@@ -116,31 +116,47 @@ module.exports = function(schema, options) {
     }
   });
 
+  function getUpdateField(update, name) {
+    if (update.hasOwnProperty(name)) {
+      return update[name];
+    }
+    if (update.$set && update.$set.hasOwnProperty(name)) {
+      return update.$set[name];
+    }
+    return undefined
+  }
+
+  function setUpdateField(update, name, value) {
+    if (update.hasOwnProperty(name)) {
+      update[name] = value;
+    } else if (update.$set && update.$set.hasOwnProperty(name)) {
+      update.$set[name] = value;
+    }
+  }
+
   function preUpdate(next) {
     var query = this;
     var update = query.getUpdate();
-    if (update.$set) {
-      update = update.$set;
-    }
     var changed = [];
     fields.forEach(function(field){
-      if (update[field] !== undefined) {
+      if (getUpdateField(update, field) !== undefined) {
         changed.push(field);
       }
     });
     var count = changed.length;
     if (count > 0) {
       changed.forEach(function(field){
-        if (typeof update[field] === 'string') {
-          encrypt(field, update[field], function(err, hash) {
+        var value = getUpdateField(update, field);
+        if (typeof value === 'string') {
+          encrypt(field, value, function(err, hash) {
             if (err) return next(err);
-            update[field] = hash;
+            setUpdateField(update, field, hash);
             if (--count === 0) {
               next();
             }
           });
         } else {
-          update[field] = '';
+          setUpdateField(update, field, '');
           if (--count === 0) {
             next();
           }
