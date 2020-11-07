@@ -3,6 +3,7 @@
 var bcrypt = require('bcryptjs');
 var mongoose = require('mongoose');
 var semver = require('semver');
+var processDocumentsOnInsertMany = require('./src/processDocumentsOnInsertMany');
 
 module.exports = function(schema, options) {
 
@@ -114,6 +115,11 @@ module.exports = function(schema, options) {
     } else {
       next();
     }
+  });
+
+  // Hash all modified encrypted fields upon inserting many documents
+  schema.pre('insertMany', function (next, documents) {
+    processDocumentsOnInsertMany(documents, fields, encrypt, next);
   });
 
   function getUpdateField(update, name) {
