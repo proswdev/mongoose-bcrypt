@@ -171,7 +171,7 @@ describe('mongoose-bcrypt', function () {
       ) {
         var testDocument1;
 
-        beforeAll(() => {
+        beforeAll(function() {
           testDocument1 = testDocuments1[originalTestDocument.index];
         });
 
@@ -312,7 +312,7 @@ describe('mongoose-bcrypt', function () {
       ) {
         var testDocument2;
 
-        beforeAll(() => {
+        beforeAll(function() {
           testDocument2 = testDocuments2[originalTestDocument.index];
         });
 
@@ -466,7 +466,7 @@ describe('mongoose-bcrypt', function () {
       ) {
         var testDocument3;
 
-        beforeAll(() => {
+        beforeAll(function() {
           testDocument3 = testDocuments3[originalTestDocument.index];
         });
 
@@ -584,7 +584,7 @@ describe('mongoose-bcrypt', function () {
       ) {
         var testDocument4;
 
-        beforeAll(() => {
+        beforeAll(function() {
           testDocument4 = testDocuments4[originalTestDocument.index];
         });
 
