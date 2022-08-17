@@ -5,7 +5,10 @@ var mongoose = require('mongoose');
 var bcrypt = require('bcryptjs');
 var semver = require('semver');
 mongoose.Promise = global.Promise = require('bluebird');
-mongoose.set('useFindAndModify', false);
+
+if (semver.gte(mongoose.version, "5.0.7") && semver.lt(mongoose.version, "5.5.3")) {
+  mongoose.set('useFindAndModify', false);
+}
 
 function deleteMany(model, cond, opt, cb) {
   if (model.deleteMany) {
