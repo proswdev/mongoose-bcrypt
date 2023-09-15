@@ -1,5 +1,5 @@
 ![npm](https://img.shields.io/npm/v/mongoose-bcrypt)
-[![Build Status](https://travis-ci.org/proswdev/mongoose-bcrypt.svg?branch=master)](https://travis-ci.org/proswdev/mongoose-bcrypt)
+[![build](https://github.com/proswdev/mongoose-bcrypt/actions/workflows/node.js.yml/badge.svg)](https://github.com/proswdev/mongoose-bcrypt/actions/workflows/node.js.yml)
 [![Coverage Status](https://coveralls.io/repos/github/proswdev/mongoose-bcrypt/badge.svg)](https://coveralls.io/github/proswdev/mongoose-bcrypt)
 ![NPM](https://img.shields.io/npm/l/mongoose-bcrypt)
 ![npm](https://img.shields.io/npm/dw/mongoose-bcrypt)
