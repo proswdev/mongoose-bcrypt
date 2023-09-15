@@ -16,8 +16,9 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [16.x, 18.x]
+        node-version: [16.x, 18.x, 20.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        mongodb-version: ['4.2', '4.4', '5.0', '6.0', '7.0']
 
     steps:
       - uses: actions/checkout@v3
@@ -26,6 +27,10 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+      - name: Start MongoDB
+        uses: supercharge/mongodb-github-action@1.10.0
+        with:
+          mongodb-version: ${{ matrix.mongodb-version }}
       - run: npm ci
       - run: npm run build --if-present
       - run: npm test
