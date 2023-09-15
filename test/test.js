@@ -4,7 +4,7 @@ var should = require('should');
 var mongoose = require('mongoose');
 var bcrypt = require('bcryptjs');
 var semver = require('semver');
-mongoose.Promise = global.Promise = require('bluebird');
+const {mongo} = require("mongoose");
 
 if (semver.gte(mongoose.version, "5.0.7") && semver.lt(mongoose.version, "5.5.3")) {
   mongoose.set('useFindAndModify', false);
@@ -213,13 +213,13 @@ describe('mongoose-bcrypt', function() {
     });
 
     it ('should return valid encryption values using promises', function() {
-      return Promise.map(fields, function(field, index) {
+      return Promise.all(fields.map(function(field, index) {
           var pwd = testPwds[index];
           return Test2[encrypt[index]](pwd)
           .then(function(hash) {
             bcrypt.compareSync(pwd,hash).should.be.true();
           });
-      })
+      }))
       .catch(function(err) {
         should.fail(err);
       });
@@ -238,9 +238,9 @@ describe('mongoose-bcrypt', function() {
     });
 
     it ('should accept valid field values using promises', function() {
-      return Promise.map(fields, function(field, index) {
+      return Promise.all(fields.map(function(field, index) {
         return test2[verify[index]](testPwds[index]);
-      }).then(function(results) {
+      })).then(function(results) {
         results.length.should.equal(fields.length);
         results.forEach(function(isMatch) {
           isMatch.should.be.true();
@@ -263,9 +263,9 @@ describe('mongoose-bcrypt', function() {
     });
 
     it ('should reject invalid field values using promises', function() {
-      return Promise.map(fields, function(field, index) {
+      return Promise.all(fields.map(function(field, index) {
         return test2[verify[index]](testPwds[index]+'bogus');
-      }).then(function(results) {
+      })).then(function(results) {
         results.length.should.equal(fields.length);
         results.forEach(function(isMatch) {
           isMatch.should.be.false();

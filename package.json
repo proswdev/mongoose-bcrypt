@@ -12,7 +12,7 @@
   "readmeFilename": "README.md",
   "repository": {
     "type": "git",
-    "url": "https://github.com/proswdev/mongoose-bcrypt.git"
+    "url": "git+https://github.com/proswdev/mongoose-bcrypt.git"
   },
   "keywords": [
     "mongoose",
@@ -42,9 +42,8 @@
     "semver": "^7.3.7"
   },
   "devDependencies": {
-    "bluebird": "^3.7.2",
     "coveralls": "^3.1.1",
-    "mocha": "9.2",
+    "mocha": "^10.2.0",
     "nyc": "^15.1.0",
     "should": "^13.2.3"
   }
