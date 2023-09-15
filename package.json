@@ -1,8 +1,9 @@
 {
   "name": "mongoose-bcrypt",
-  "version": "1.10.2",
+  "version": "1.11.0",
   "description": "Mongoose plugin encrypting field(s) with bcrypt and providing methods to verify",
   "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "test": "mocha",
     "coverage": "nyc mocha",
